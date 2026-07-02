@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Картотека — тренажёр слов</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#182420;
@@ -233,6 +234,14 @@
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);
     padding:10px 18px;border-radius:6px;font-size:13px;font-weight:600;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,0.4);}
 
+  /* Auth screen */
+  .auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .auth-card{background:var(--bg-2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:30px 26px;max-width:380px;width:100%;text-align:center;}
+  .auth-brand{font-family:var(--serif);font-size:26px;font-weight:700;margin-bottom:8px;}
+  .auth-brand span{color:var(--accent);}
+  .auth-card p{color:var(--text-muted);font-size:13.5px;line-height:1.55;margin:6px 0 18px;}
+  .auth-msg{font-size:13px;margin-top:14px;line-height:1.5;}
+
   ::-webkit-scrollbar{width:8px;}
   ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:4px;}
 
@@ -284,50 +293,11 @@
 (function(){
   "use strict";
 
-  /* ---------------- storage helpers ----------------
-     Uses Claude's window.storage when running inside a Claude artifact,
-     and falls back to plain browser localStorage when hosted standalone
-     (e.g. on GitHub Pages / Netlify). Same app, works in both places. */
-  const LS_PREFIX = 'kartoteka:';
-  const hasClaudeStorage = (typeof window!=='undefined' && window.storage && typeof window.storage.get==='function');
-
-  async function sGet(key, fallback){
-    if(hasClaudeStorage){
-      try{
-        const r = await window.storage.get(key, false);
-        return r ? JSON.parse(r.value) : fallback;
-      }catch(e){ return fallback; }
-    }
-    try{
-      const raw = localStorage.getItem(LS_PREFIX+key);
-      return raw ? JSON.parse(raw) : fallback;
-    }catch(e){ return fallback; }
-  }
-
-  async function sSetRaw(key, value){
-    if(hasClaudeStorage){
-      for(let attempt=0; attempt<2; attempt++){
-        try{ await window.storage.set(key, JSON.stringify(value), false); return; }
-        catch(e){
-          if(attempt===0) await new Promise(r=>setTimeout(r,400));
-          else console.error('storage set failed', e);
-        }
-      }
-      return;
-    }
-    try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(value)); }
-    catch(e){ console.error('localStorage set failed', e); }
-  }
-
-  // Writes to the same key are queued so concurrent saves (e.g. several
-  // background image fetches finishing at once) never race each other.
-  const _saveQueues = {};
-  function sSet(key, value){
-    const prev = _saveQueues[key] || Promise.resolve();
-    const next = prev.then(()=> sSetRaw(key, value)).catch(()=>{});
-    _saveQueues[key] = next;
-    return next;
-  }
+  /* ---------------- Supabase ---------------- */
+  const SUPABASE_URL = 'https://uczpzpdawnarzbfavjtr.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_gihTh-0CFWUXVR3bC_TziQ_QtAw4MkI';
+  let supaClient = null;
+  let session = null;
 
   const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
   const DAY = 86400000;
@@ -352,20 +322,84 @@
     modal: null
   };
 
+  /* ---------------- DB <-> app object mapping ---------------- */
+  function dbToGroup(r){
+    return {id:r.id, name:r.name, emoji:r.emoji, lang:r.lang, createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now()};
+  }
+  function dbToWord(r){
+    return {
+      id:r.id, groupId:r.group_id, term:r.term, translation:r.translation,
+      example:r.example||'', image:r.image||null, box:r.box||0,
+      nextReview: r.next_review ? new Date(r.next_review).getTime() : Date.now(),
+      correct:r.correct||0, wrong:r.wrong||0,
+      createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now()
+    };
+  }
+
   async function loadAll(){
-    state.groups = await sGet('groups', []);
-    state.words = await sGet('words', []);
-    state.stats = await sGet('stats', {streak:0,lastDate:null,totalReviews:0});
+    const [groupsRes, wordsRes, statsRes] = await Promise.all([
+      supaClient.from('groups').select('*').order('created_at', {ascending:true}),
+      supaClient.from('words').select('*').order('created_at', {ascending:false}),
+      supaClient.from('user_stats').select('*').maybeSingle()
+    ]);
+    if(groupsRes.error) console.error(groupsRes.error);
+    if(wordsRes.error) console.error(wordsRes.error);
+    state.groups = (groupsRes.data||[]).map(dbToGroup);
+    state.words = (wordsRes.data||[]).map(dbToWord);
+    const sr = statsRes.data;
+    state.stats = sr ? {streak:sr.streak||0, lastDate:sr.last_date||null, totalReviews:sr.total_reviews||0} : {streak:0,lastDate:null,totalReviews:0};
+
     if(state.groups.length === 0 && state.words.length === 0){
       // seed a starter group so the app isn't empty on first run
       const g = {id:uid(), name:'Мои слова', emoji:'📘', lang:'en'};
+      await insertGroupRow(g);
       state.groups.push(g);
-      await sSet('groups', state.groups);
     }
   }
-  function saveGroups(){ sSet('groups', state.groups); }
-  function saveWords(){ sSet('words', state.words); }
-  function saveStats(){ sSet('stats', state.stats); }
+
+  async function insertGroupRow(g){
+    const {error} = await supaClient.from('groups').insert({id:g.id, name:g.name, emoji:g.emoji, lang:g.lang});
+    if(error){ console.error(error); toast('Не удалось сохранить группу'); }
+  }
+
+  async function insertWordRow(w){
+    const {error} = await supaClient.from('words').insert({
+      id:w.id, group_id:w.groupId, term:w.term, translation:w.translation, example:w.example,
+      image:w.image, box:w.box, next_review:new Date(w.nextReview).toISOString(), correct:w.correct, wrong:w.wrong
+    });
+    if(error){ console.error(error); toast('Не удалось сохранить слово'); }
+  }
+
+  async function insertWordsRows(words){
+    const rows = words.map(w=>({
+      id:w.id, group_id:w.groupId, term:w.term, translation:w.translation, example:w.example,
+      image:w.image, box:w.box, next_review:new Date(w.nextReview).toISOString(), correct:w.correct, wrong:w.wrong
+    }));
+    const {error} = await supaClient.from('words').insert(rows);
+    if(error){ console.error(error); toast('Не удалось импортировать часть слов'); }
+  }
+
+  function updateWordImageRow(id, image){
+    supaClient.from('words').update({image}).eq('id', id).then(({error})=>{ if(error) console.error(error); });
+  }
+
+  async function deleteWordRow(id){
+    const {error} = await supaClient.from('words').delete().eq('id', id);
+    if(error){ console.error(error); toast('Не удалось удалить слово'); }
+  }
+
+  function updateWordProgressRow(w){
+    supaClient.from('words').update({
+      box:w.box, next_review:new Date(w.nextReview).toISOString(), correct:w.correct, wrong:w.wrong
+    }).eq('id', w.id).then(({error})=>{ if(error) console.error(error); });
+  }
+
+  function upsertStatsRow(){
+    if(!session) return;
+    supaClient.from('user_stats').upsert({
+      user_id: session.user.id, streak: state.stats.streak, last_date: state.stats.lastDate, total_reviews: state.stats.totalReviews
+    }).then(({error})=>{ if(error) console.error(error); });
+  }
 
   function touchStreak(){
     const today = new Date().toDateString();
@@ -373,7 +407,7 @@
     const y = new Date(Date.now()-DAY).toDateString();
     state.stats.streak = (state.stats.lastDate === y) ? state.stats.streak + 1 : 1;
     state.stats.lastDate = today;
-    saveStats();
+    upsertStatsRow();
   }
 
   /* ---------------- image + speech ---------------- */
@@ -422,7 +456,10 @@
           <div class="brand-title">Карто<span>тека</span></div>
           <div class="brand-sub">личный архив слов</div>
         </div>
-        <div class="streak-badge">🔥 ${state.stats.streak} ${dayWord(state.stats.streak)} подряд</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="streak-badge">🔥 ${state.stats.streak} ${dayWord(state.stats.streak)} подряд</div>
+          <button class="icon-btn" id="logout-btn" title="Выйти из аккаунта">⎋</button>
+        </div>
       </div>
       <div class="tabs">
         ${tabBtn('library','Библиотека')}
@@ -452,6 +489,8 @@
     root.querySelectorAll('.tab-btn').forEach(b=>{
       b.onclick = () => { state.view = b.dataset.tab; state.session=null; render(); };
     });
+    const lo = root.querySelector('#logout-btn');
+    if(lo) lo.onclick = async ()=>{ await supaClient.auth.signOut(); };
   }
 
   function renderView(){
@@ -545,8 +584,8 @@
 
   function deleteWord(id){
     state.words = state.words.filter(w=>w.id!==id);
-    saveWords();
     renderView();
+    deleteWordRow(id);
   }
 
   /* ================= MODALS: group / word / bulk ================= */
@@ -687,10 +726,10 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
         if(!name){ toast('Введи название группы'); return; }
         const g = {id:uid(), name, emoji:state.modal.emoji, lang:root.querySelector('#g-lang').value};
         state.groups.push(g);
-        saveGroups();
         state.activeGroup = g.id;
         closeModal();
         renderView();
+        insertGroupRow(g);
       };
     }
 
@@ -703,14 +742,14 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
         if(!term || !translation){ toast('Заполни слово и перевод'); return; }
         const w = {id:uid(), groupId, term, translation, example, image:null, box:0, nextReview:Date.now(), correct:0, wrong:0, createdAt:Date.now()};
         state.words.push(w);
-        saveWords();
         closeModal();
         renderView();
+        await insertWordRow(w);
         const g = groupById(groupId);
         const img = await fetchImage(term, g && g.lang);
         if(img){
           const found = state.words.find(x=>x.id===w.id);
-          if(found){ found.image = img; saveWords(); if(state.view==='library') renderView(); }
+          if(found){ found.image = img; updateWordImageRow(w.id, img); if(state.view==='library') renderView(); }
         }
       };
     }
@@ -769,24 +808,20 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
           image:null, box:0, nextReview:Date.now(), correct:0, wrong:0, createdAt:Date.now()
         }));
         state.words = state.words.concat(newWords);
-        saveWords();
         closeModal();
         renderView();
         toast(`Импортировано слов: ${newWords.length}`);
+        await insertWordsRows(newWords);
         const g = groupById(groupId);
-        const ids = newWords.map(w=>w.id);
         Promise.all(newWords.map(w => fetchImage(w.term, g && g.lang).then(img => ({id:w.id, img}))))
           .then(results=>{
             let changed = false;
             results.forEach(r=>{
               if(!r.img) return;
               const found = state.words.find(x=>x.id===r.id);
-              if(found){ found.image = r.img; changed = true; }
+              if(found){ found.image = r.img; changed = true; updateWordImageRow(r.id, r.img); }
             });
-            if(changed){
-              saveWords();
-              if(state.view==='library') renderView();
-            }
+            if(changed && state.view==='library') renderView();
           });
       };
     }
@@ -870,7 +905,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
       w.wrong = (w.wrong||0)+1;
     }
     w.nextReview = Date.now() + BOX_INTERVALS[w.box]*DAY;
-    saveWords();
+    updateWordProgressRow(w);
     state.stats.totalReviews = (state.stats.totalReviews||0)+1;
     touchStreak();
   }
@@ -1135,11 +1170,65 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     `;
   }
 
+  /* ---------------- auth screen ---------------- */
+  function loginHtml(){
+    return `
+    <div class="auth-screen">
+      <div class="auth-card">
+        <div class="auth-brand">Карто<span>тека</span></div>
+        <p>Личный архив слов. Вход по почте — без пароля. Слова будут доступны с любого устройства.</p>
+        <input type="text" id="auth-email" placeholder="твоя почта" autocomplete="email">
+        <div style="margin-top:12px;"><button class="btn btn-accent btn-block" id="auth-send">Отправить ссылку для входа</button></div>
+        <div id="auth-msg" class="auth-msg"></div>
+      </div>
+    </div>`;
+  }
+  function bindLogin(){
+    const btn = document.getElementById('auth-send');
+    if(!btn) return;
+    const emailInput = document.getElementById('auth-email');
+    const msg = document.getElementById('auth-msg');
+    const send = async ()=>{
+      const email = (emailInput.value||'').trim();
+      if(!email || !email.includes('@')){ msg.textContent='Введи корректную почту'; msg.style.color='#F0A79F'; return; }
+      btn.disabled = true; btn.textContent = 'Отправляю…';
+      const redirectTo = window.location.href.split('#')[0].split('?')[0];
+      const { error } = await supaClient.auth.signInWithOtp({ email, options:{ emailRedirectTo: redirectTo } });
+      btn.disabled = false; btn.textContent = 'Отправить ссылку для входа';
+      if(error){ msg.textContent = 'Ошибка отправки: '+error.message; msg.style.color='#F0A79F'; }
+      else { msg.textContent = 'Ссылка отправлена! Открой почту на этом устройстве и перейди по ссылке.'; msg.style.color='#9FE0CD'; }
+    };
+    btn.onclick = send;
+    emailInput.onkeydown = (e)=>{ if(e.key==='Enter') send(); };
+  }
+  function showLogin(){
+    root.innerHTML = loginHtml();
+    bindLogin();
+  }
+
   /* ---------------- init ---------------- */
-  (async function init(){
+  let bootedFor = null;
+  async function boot(){
     root.innerHTML = `<div style="padding:60px;text-align:center;color:var(--text-muted);font-family:var(--mono);">загрузка картотеки…</div>`;
     await loadAll();
     render();
+  }
+  (function init(){
+    root.innerHTML = `<div style="padding:60px;text-align:center;color:var(--text-muted);font-family:var(--mono);">подключение…</div>`;
+    if(typeof supabase === 'undefined'){
+      root.innerHTML = `<div style="padding:60px;text-align:center;color:var(--text-muted);">Не удалось загрузить модуль базы данных. Проверь интернет-соединение и обнови страницу.</div>`;
+      return;
+    }
+    supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supaClient.auth.onAuthStateChange((event, sess)=>{
+      session = sess;
+      if(session){
+        if(bootedFor !== session.user.id){ bootedFor = session.user.id; boot(); }
+      } else {
+        bootedFor = null;
+        showLogin();
+      }
+    });
   })();
 
 })();
