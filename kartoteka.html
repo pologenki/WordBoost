@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Картотека — тренажёр слов</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#182420;
+    --bg-2:#1F2E28;
+    --bg-3:#25352E;
+    --card:#F3EEd8;
+    --card-2:#EAE3C4;
+    --ink:#20281F;
+    --ink-soft:#4B5A4E;
+    --text:#EAE7D6;
+    --text-muted:#8FA79B;
+    --accent:#D9A441;
+    --accent-ink:#3A2A0E;
+    --teal:#4E9482;
+    --danger:#C1554D;
+    --danger-ink:#3a1512;
+    --radius:6px;
+    --serif:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{
+    background:var(--bg);
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(217,164,65,0.06), transparent 45%),
+      radial-gradient(circle at 90% 100%, rgba(78,148,130,0.08), transparent 45%);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  #root{max-width:820px;margin:0 auto;padding:20px 16px 80px;}
+
+  /* Header */
+  .app-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;padding:4px 2px;}
+  .brand{display:flex;flex-direction:column;}
+  .brand-title{font-family:var(--serif);font-size:30px;font-weight:700;letter-spacing:0.5px;color:var(--text);}
+  .brand-title span{color:var(--accent);}
+  .brand-sub{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-top:2px;}
+  .streak-badge{font-family:var(--mono);font-size:13px;background:var(--bg-3);border:1px solid rgba(217,164,65,0.35);color:var(--accent);padding:6px 10px;border-radius:var(--radius);display:flex;align-items:center;gap:6px;white-space:nowrap;}
+
+  /* Tabs */
+  .tabs{display:flex;gap:4px;margin:18px 0 22px;border-bottom:1px solid rgba(255,255,255,0.08);}
+  .tab-btn{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:0.5px;text-transform:uppercase;
+    background:none;border:none;color:var(--text-muted);padding:10px 14px;cursor:pointer;
+    border-bottom:2px solid transparent;transition:color .15s, border-color .15s;
+  }
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  h2.section-title{font-family:var(--serif);font-size:20px;font-weight:700;margin:0 0 14px;color:var(--text);}
+  .eyebrow{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:4px;display:block;}
+
+  /* Buttons */
+  .btn{
+    font-family:var(--sans);font-size:14px;font-weight:600;border-radius:var(--radius);border:1px solid transparent;
+    padding:9px 16px;cursor:pointer;transition:transform .08s ease, filter .15s;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-accent{background:var(--accent);color:var(--accent-ink);}
+  .btn-accent:hover{filter:brightness(1.08);}
+  .btn-teal{background:var(--teal);color:#0d211c;}
+  .btn-teal:hover{filter:brightness(1.1);}
+  .btn-ghost{background:transparent;color:var(--text);border-color:rgba(255,255,255,0.18);}
+  .btn-ghost:hover{border-color:rgba(255,255,255,0.4);}
+  .btn-danger{background:transparent;color:var(--danger);border-color:rgba(193,85,77,0.5);}
+  .btn-danger:hover{background:rgba(193,85,77,0.12);}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  .btn-block{width:100%;}
+  .btn[disabled]{opacity:0.4;cursor:not-allowed;}
+
+  /* Cards / panels */
+  .panel{background:var(--bg-2);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
+
+  /* Group tabs (folder tabs) */
+  .group-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+  .group-chip{
+    font-family:var(--mono);font-size:12.5px;padding:7px 12px 7px 10px;border-radius:3px 3px 0 0;
+    background:var(--bg-3);border:1px solid rgba(255,255,255,0.08);border-bottom:none;color:var(--text-muted);
+    cursor:pointer;display:flex;align-items:center;gap:6px;position:relative;top:1px;
+  }
+  .group-chip.active{background:var(--card);color:var(--ink);border-color:var(--card);font-weight:700;}
+  .group-chip .count{opacity:0.65;font-size:11px;}
+  .group-chip.add{border-style:dashed;color:var(--accent);}
+
+  /* Library list */
+  .word-list{border-top:1px solid rgba(255,255,255,0.08);}
+  .word-row{
+    display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid rgba(255,255,255,0.06);
+  }
+  .word-thumb{width:38px;height:38px;border-radius:4px;object-fit:cover;background:var(--bg-3);flex-shrink:0;}
+  .word-thumb.placeholder{display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .word-main{flex:1;min-width:0;}
+  .word-term{font-family:var(--serif);font-size:15.5px;color:var(--text);}
+  .word-term .sep{color:var(--text-muted);margin:0 6px;font-family:var(--sans);}
+  .word-translation{color:var(--accent);font-weight:600;}
+  .word-example{font-size:12px;color:var(--text-muted);margin-top:2px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .word-box{font-family:var(--mono);font-size:10.5px;color:var(--text-muted);white-space:nowrap;}
+  .word-actions{display:flex;gap:4px;}
+  .icon-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;padding:4px 6px;border-radius:4px;}
+  .icon-btn:hover{color:var(--text);background:rgba(255,255,255,0.08);}
+
+  .empty-state{text-align:center;padding:50px 20px;color:var(--text-muted);}
+  .empty-state .big-emoji{font-size:38px;margin-bottom:10px;}
+  .empty-state p{font-family:var(--serif);font-size:15px;max-width:340px;margin:0 auto 16px;}
+
+  /* Forms */
+  label.field-label{display:block;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:5px;margin-top:12px;}
+  input[type=text],input[type=search],textarea,select{
+    width:100%;background:var(--bg-3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;
+    color:var(--text);font-family:var(--sans);font-size:16px;padding:10px 10px;outline:none;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--accent);}
+  textarea{resize:vertical;min-height:70px;font-family:var(--mono);font-size:12.5px;}
+  .form-row{display:flex;gap:10px;}
+  .form-row > *{flex:1;}
+  .emoji-picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+  .emoji-opt{font-size:18px;background:var(--bg-3);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:5px 8px;cursor:pointer;}
+  .emoji-opt.sel{border-color:var(--accent);background:rgba(217,164,65,0.15);}
+
+  /* Modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(10,15,12,0.72);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50;}
+  .modal{background:var(--bg-2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:22px;width:100%;max-width:480px;}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .modal-title{font-family:var(--serif);font-size:19px;font-weight:700;}
+  .modal-close{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+  .hint{font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5;}
+
+  /* Practice picker */
+  .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:520px){.mode-grid{grid-template-columns:1fr;}}
+  .mode-card{
+    background:var(--bg-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:16px;cursor:pointer;
+    transition:border-color .15s, transform .1s;
+  }
+  .mode-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+  .mode-card .m-emoji{font-size:22px;}
+  .mode-card .m-title{font-family:var(--serif);font-size:16px;font-weight:700;margin:8px 0 3px;}
+  .mode-card .m-desc{font-size:12.5px;color:var(--text-muted);line-height:1.45;}
+  .mode-card[disabled]{opacity:0.4;pointer-events:none;}
+
+  /* Flashcard */
+  .session-wrap{display:flex;flex-direction:column;align-items:center;}
+  .session-top{width:100%;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-bottom:16px;}
+  .progress-track{flex:1;height:4px;background:var(--bg-3);border-radius:2px;margin:0 12px;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--accent);transition:width .25s;}
+
+  .flashcard{
+    width:100%;max-width:380px;aspect-ratio:5/3.4;perspective:1200px;cursor:pointer;margin-bottom:20px;
+  }
+  .flashcard-inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
+  .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
+  .flashcard-face{
+    position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;
+    background:var(--card);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.05);
+    border-left:6px solid var(--accent);
+  }
+  .flashcard-face.back{transform:rotateY(180deg);background:var(--card-2);}
+  .fc-hole{position:absolute;top:14px;left:14px;width:10px;height:10px;border-radius:50%;background:var(--bg);box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);}
+  .fc-term{font-family:var(--serif);font-size:28px;font-weight:700;text-align:center;}
+  .fc-sub{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:8px;text-transform:uppercase;letter-spacing:1px;}
+  .fc-translation{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--teal);text-align:center;}
+  .fc-example{font-size:13px;font-style:italic;color:var(--ink-soft);margin-top:10px;text-align:center;max-width:90%;}
+  .fc-img{width:100%;max-height:90px;object-fit:cover;border-radius:6px;margin-bottom:10px;}
+  .speak-btn{position:absolute;top:12px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-soft);}
+
+  .judge-row{display:flex;gap:12px;width:100%;max-width:380px;}
+  .judge-btn{flex:1;padding:14px 10px;border-radius:8px;font-family:var(--sans);font-weight:700;font-size:14px;border:none;cursor:pointer;}
+  .judge-no{background:rgba(193,85,77,0.18);color:#F0A79F;border:1px solid rgba(193,85,77,0.4);}
+  .judge-yes{background:rgba(78,148,130,0.2);color:#9FE0CD;border:1px solid rgba(78,148,130,0.45);}
+  .hint-tap{font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-bottom:14px;}
+
+  /* Quiz */
+  .quiz-term{font-family:var(--serif);font-size:26px;text-align:center;margin:20px 0 26px;}
+  .quiz-options{display:flex;flex-direction:column;gap:10px;max-width:420px;margin:0 auto;width:100%;}
+  .opt-btn{
+    background:var(--bg-2);border:1px solid rgba(255,255,255,0.12);color:var(--text);text-align:left;
+    padding:13px 14px;border-radius:var(--radius);font-size:15px;cursor:pointer;
+  }
+  .opt-btn:hover{border-color:var(--accent);}
+  .opt-btn.correct{background:rgba(78,148,130,0.25);border-color:var(--teal);}
+  .opt-btn.wrong{background:rgba(193,85,77,0.22);border-color:var(--danger);}
+  .opt-btn[disabled]{pointer-events:none;}
+
+  /* Typing */
+  .type-wrap{max-width:420px;margin:0 auto;width:100%;text-align:center;}
+  .type-input{font-size:18px;text-align:center;padding:12px;}
+  .type-feedback{margin-top:12px;font-family:var(--mono);font-size:13px;}
+  .type-feedback.ok{color:#9FE0CD;}
+  .type-feedback.bad{color:#F0A79F;}
+
+  /* Match */
+  .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:480px;margin:0 auto;width:100%;}
+  .match-card{
+    background:var(--bg-2);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:12px 10px;
+    font-size:13.5px;text-align:center;cursor:pointer;min-height:52px;display:flex;align-items:center;justify-content:center;
+  }
+  .match-card.sel{border-color:var(--accent);background:rgba(217,164,65,0.15);}
+  .match-card.done{border-color:var(--teal);background:rgba(78,148,130,0.15);opacity:0.5;pointer-events:none;}
+  .match-card.wrong-flash{border-color:var(--danger);background:rgba(193,85,77,0.2);}
+
+  .session-end{text-align:center;padding:30px 10px;}
+  .session-end .big-emoji{font-size:44px;}
+  .session-end h3{font-family:var(--serif);font-size:22px;margin:10px 0 4px;}
+  .session-end p{color:var(--text-muted);font-size:14px;}
+  .end-stats{display:flex;gap:20px;justify-content:center;margin:18px 0;font-family:var(--mono);}
+  .end-stat b{font-size:22px;display:block;color:var(--accent);}
+  .end-stat span{font-size:11px;color:var(--text-muted);text-transform:uppercase;}
+
+  /* Stats view */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+  .stat-box{background:var(--bg-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:14px;text-align:center;}
+  .stat-box b{display:block;font-family:var(--serif);font-size:24px;color:var(--accent);}
+  .stat-box span{font-size:11px;color:var(--text-muted);font-family:var(--mono);text-transform:uppercase;}
+  .box-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .box-bar .lbl{width:80px;font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+  .box-bar .track{flex:1;height:10px;background:var(--bg-3);border-radius:5px;overflow:hidden;}
+  .box-bar .fill{height:100%;background:var(--teal);}
+  .box-bar .n{width:30px;text-align:right;font-family:var(--mono);font-size:12px;}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);
+    padding:10px 18px;border-radius:6px;font-size:13px;font-weight:600;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,0.4);}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:4px;}
+
+  /* Mobile optimization */
+  @media (max-width:480px){
+    #root{padding:12px 10px 76px;}
+    .app-header{flex-wrap:wrap;gap:8px;}
+    .brand-title{font-size:23px;}
+    .brand-sub{font-size:9.5px;letter-spacing:1px;}
+    .streak-badge{font-size:11px;padding:5px 8px;}
+    .tabs{gap:0;}
+    .tab-btn{font-size:11px;padding:9px 8px;flex:1;text-align:center;}
+    .group-row{gap:6px;}
+    .group-chip{font-size:11.5px;padding:7px 9px 7px 8px;}
+    .btn{min-height:42px;}
+    .modal-backdrop{padding:0;align-items:stretch;}
+    .modal{max-width:100%;border-radius:0;min-height:100vh;padding:18px 16px 28px;}
+    .modal-title{font-size:17px;}
+    .form-row{flex-direction:column;gap:0;}
+    .word-row{flex-wrap:wrap;row-gap:4px;}
+    .word-box{order:5;width:100%;padding-left:50px;margin-top:-2px;}
+    .word-term{font-size:14.5px;}
+    .quiz-term{font-size:21px;}
+    .opt-btn{padding:14px 12px;font-size:14.5px;}
+    .flashcard{max-width:100%;}
+    .fc-term{font-size:clamp(20px,7vw,26px);}
+    .fc-translation{font-size:clamp(18px,6vw,22px);}
+    .fc-example{font-size:12px;}
+    .judge-btn{padding:15px 8px;font-size:13.5px;}
+    .match-grid{gap:6px;}
+    .match-card{font-size:12px;padding:10px 6px;min-height:48px;}
+    .mode-card{padding:14px;}
+    .icon-btn{font-size:16px;padding:8px 9px;}
+    .stat-grid{gap:8px;}
+    .stat-box{padding:11px;}
+    .stat-box b{font-size:20px;}
+    .end-stats{gap:14px;flex-wrap:wrap;}
+    .session-end{padding:20px 6px;}
+  }
+  @media (hover:none){
+    .btn, .opt-btn, .mode-card, .icon-btn, .group-chip, .match-card, .judge-btn{ -webkit-tap-highlight-color:transparent; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- storage helpers ----------------
+     Uses Claude's window.storage when running inside a Claude artifact,
+     and falls back to plain browser localStorage when hosted standalone
+     (e.g. on GitHub Pages / Netlify). Same app, works in both places. */
+  const LS_PREFIX = 'kartoteka:';
+  const hasClaudeStorage = (typeof window!=='undefined' && window.storage && typeof window.storage.get==='function');
+
+  async function sGet(key, fallback){
+    if(hasClaudeStorage){
+      try{
+        const r = await window.storage.get(key, false);
+        return r ? JSON.parse(r.value) : fallback;
+      }catch(e){ return fallback; }
+    }
+    try{
+      const raw = localStorage.getItem(LS_PREFIX+key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+
+  async function sSetRaw(key, value){
+    if(hasClaudeStorage){
+      for(let attempt=0; attempt<2; attempt++){
+        try{ await window.storage.set(key, JSON.stringify(value), false); return; }
+        catch(e){
+          if(attempt===0) await new Promise(r=>setTimeout(r,400));
+          else console.error('storage set failed', e);
+        }
+      }
+      return;
+    }
+    try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(value)); }
+    catch(e){ console.error('localStorage set failed', e); }
+  }
+
+  // Writes to the same key are queued so concurrent saves (e.g. several
+  // background image fetches finishing at once) never race each other.
+  const _saveQueues = {};
+  function sSet(key, value){
+    const prev = _saveQueues[key] || Promise.resolve();
+    const next = prev.then(()=> sSetRaw(key, value)).catch(()=>{});
+    _saveQueues[key] = next;
+    return next;
+  }
+
+  const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+  const DAY = 86400000;
+  const BOX_INTERVALS = [0,1,2,4,7,14,30]; // days, index = box level
+
+  const LANGS = [
+    {code:'en',name:'Английский'},{code:'de',name:'Немецкий'},{code:'es',name:'Испанский'},
+    {code:'fr',name:'Французский'},{code:'it',name:'Итальянский'},{code:'pt',name:'Португальский'},
+    {code:'tr',name:'Турецкий'},{code:'nl',name:'Нидерландский'},{code:'pl',name:'Польский'},
+    {code:'sv',name:'Шведский'},{code:'zh',name:'Китайский'},{code:'ja',name:'Японский'},
+    {code:'ko',name:'Корейский'},{code:'ru',name:'Русский'},{code:'et',name:'Эстонский'},{code:'other',name:'Другой'}
+  ];
+  const EMOJIS = ['📘','🍎','🧭','🌿','🧠','☕','🚀','🏔️','🎯','🛠️','🐝','🎲','🧳','🔥','🌊','⚙️'];
+
+  /* ---------------- app state ---------------- */
+  let state = {
+    groups: [],   // {id,name,emoji,lang}
+    words: [],    // {id,groupId,term,translation,example,image,box,nextReview,correct,wrong,createdAt}
+    stats: {streak:0,lastDate:null,totalReviews:0},
+    view: 'library',
+    activeGroup: 'all',
+    modal: null
+  };
+
+  async function loadAll(){
+    state.groups = await sGet('groups', []);
+    state.words = await sGet('words', []);
+    state.stats = await sGet('stats', {streak:0,lastDate:null,totalReviews:0});
+    if(state.groups.length === 0 && state.words.length === 0){
+      // seed a starter group so the app isn't empty on first run
+      const g = {id:uid(), name:'Мои слова', emoji:'📘', lang:'en'};
+      state.groups.push(g);
+      await sSet('groups', state.groups);
+    }
+  }
+  function saveGroups(){ sSet('groups', state.groups); }
+  function saveWords(){ sSet('words', state.words); }
+  function saveStats(){ sSet('stats', state.stats); }
+
+  function touchStreak(){
+    const today = new Date().toDateString();
+    if(state.stats.lastDate === today) return;
+    const y = new Date(Date.now()-DAY).toDateString();
+    state.stats.streak = (state.stats.lastDate === y) ? state.stats.streak + 1 : 1;
+    state.stats.lastDate = today;
+    saveStats();
+  }
+
+  /* ---------------- image + speech ---------------- */
+  async function fetchImage(term, lang){
+    try{
+      const l = (lang && lang!=='other') ? lang : 'en';
+      const url = `https://${l}.wikipedia.org/w/api.php?origin=*&action=query&prop=pageimages&format=json&piprop=thumbnail&pithumbsize=200&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrlimit=1`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const pages = data && data.query && data.query.pages;
+      if(pages){
+        const first = Object.values(pages)[0];
+        if(first && first.thumbnail && first.thumbnail.source) return first.thumbnail.source;
+      }
+    }catch(e){ /* silent — image is a nice-to-have */ }
+    return null;
+  }
+  function speak(text, lang){
+    try{
+      if(!window.speechSynthesis) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = (lang && lang!=='other') ? lang : 'en';
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  /* ---------------- derived helpers ---------------- */
+  function groupById(id){ return state.groups.find(g=>g.id===id); }
+  function wordsIn(groupId){
+    return groupId==='all' ? state.words.slice() : state.words.filter(w=>w.groupId===groupId);
+  }
+  function dueWords(list){
+    const now = Date.now();
+    return list.filter(w => !w.nextReview || w.nextReview <= now);
+  }
+  function esc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  /* ---------------- render root ---------------- */
+  const root = document.getElementById('root');
+
+  function render(){
+    root.innerHTML = `
+      <div class="app-header">
+        <div class="brand">
+          <div class="brand-title">Карто<span>тека</span></div>
+          <div class="brand-sub">личный архив слов</div>
+        </div>
+        <div class="streak-badge">🔥 ${state.stats.streak} ${dayWord(state.stats.streak)} подряд</div>
+      </div>
+      <div class="tabs">
+        ${tabBtn('library','Библиотека')}
+        ${tabBtn('practice','Тренировка')}
+        ${tabBtn('stats','Статистика')}
+      </div>
+      <div id="view-slot"></div>
+      <div id="modal-slot"></div>
+      <div id="toast-slot"></div>
+    `;
+    bindHeader();
+    renderView();
+    renderModal();
+  }
+  function dayWord(n){
+    n = Math.abs(n)%100;
+    const n1 = n%10;
+    if(n>10 && n<20) return 'дней';
+    if(n1===1) return 'день';
+    if(n1>=2 && n1<=4) return 'дня';
+    return 'дней';
+  }
+  function tabBtn(id,label){
+    return `<button class="tab-btn ${state.view===id?'active':''}" data-tab="${id}">${label}</button>`;
+  }
+  function bindHeader(){
+    root.querySelectorAll('.tab-btn').forEach(b=>{
+      b.onclick = () => { state.view = b.dataset.tab; state.session=null; render(); };
+    });
+  }
+
+  function renderView(){
+    const slot = document.getElementById('view-slot');
+    if(state.view==='library') slot.innerHTML = libraryView();
+    else if(state.view==='practice') slot.innerHTML = state.session ? sessionView() : practiceView();
+    else if(state.view==='stats') slot.innerHTML = statsView();
+    bindView();
+  }
+
+  /* ================= LIBRARY ================= */
+  function libraryView(){
+    const groups = state.groups;
+    const chips = [`<div class="group-chip ${state.activeGroup==='all'?'active':''}" data-g="all">Все <span class="count">${state.words.length}</span></div>`]
+      .concat(groups.map(g=>{
+        const n = wordsIn(g.id).length;
+        return `<div class="group-chip ${state.activeGroup===g.id?'active':''}" data-g="${g.id}">${g.emoji} ${esc(g.name)} <span class="count">${n}</span></div>`;
+      }))
+      .concat([`<div class="group-chip add" data-newgroup="1">+ группа</div>`])
+      .join('');
+
+    const list = wordsIn(state.activeGroup).slice().sort((a,b)=>b.createdAt-a.createdAt);
+    const rows = list.length ? list.map(wordRow).join('') : `
+      <div class="empty-state">
+        <div class="big-emoji">🗂️</div>
+        <p>Пока здесь пусто. Добавь слово вручную или загрузи готовый список файлом — картотека заполнится сама.</p>
+      </div>`;
+
+    return `
+      <div class="group-row">${chips}</div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-accent" data-add-word="1">+ Добавить слово</button>
+        <button class="btn btn-ghost" data-bulk="1">📥 Импорт из файла / таблицы</button>
+      </div>
+      <div class="word-list">${rows}</div>
+    `;
+  }
+  function wordRow(w){
+    const g = groupById(w.groupId);
+    const thumb = w.image
+      ? `<img class="word-thumb" src="${w.image}" alt="">`
+      : `<div class="word-thumb placeholder">${g?g.emoji:'📘'}</div>`;
+    return `
+      <div class="word-row" data-word="${w.id}">
+        ${thumb}
+        <div class="word-main">
+          <div class="word-term">${esc(w.term)}<span class="sep">—</span><span class="word-translation">${esc(w.translation)}</span></div>
+          ${w.example?`<div class="word-example">${esc(w.example)}</div>`:''}
+        </div>
+        <div class="word-box">box ${w.box||0}</div>
+        <div class="word-actions">
+          <button class="icon-btn" data-speak="${w.id}" title="Произнести">🔊</button>
+          <button class="icon-btn" data-del="${w.id}" title="Удалить">✕</button>
+        </div>
+      </div>`;
+  }
+
+  function bindView(){
+    if(state.view==='library'){
+      root.querySelectorAll('.group-chip[data-g]').forEach(c=>{
+        c.onclick = () => { state.activeGroup = c.dataset.g; renderView(); };
+      });
+      const addG = root.querySelector('[data-newgroup]');
+      if(addG) addG.onclick = () => openGroupModal();
+      const addW = root.querySelector('[data-add-word]');
+      if(addW) addW.onclick = () => openWordModal();
+      const bulk = root.querySelector('[data-bulk]');
+      if(bulk) bulk.onclick = () => openBulkModal();
+      root.querySelectorAll('[data-del]').forEach(b=>{
+        b.onclick = (e)=>{ e.stopPropagation(); deleteWord(b.dataset.del); };
+      });
+      root.querySelectorAll('[data-speak]').forEach(b=>{
+        b.onclick = (e)=>{ e.stopPropagation();
+          const w = state.words.find(x=>x.id===b.dataset.speak);
+          const g = w && groupById(w.groupId);
+          if(w) speak(w.term, g && g.lang);
+        };
+      });
+    } else if(state.view==='practice' && !state.session){
+      root.querySelectorAll('[data-mode]').forEach(c=>{
+        c.onclick = () => startSession(c.dataset.mode, c.dataset.group);
+      });
+      const gsel = root.querySelector('#practice-group');
+      if(gsel) gsel.onchange = () => { state.practiceGroup = gsel.value; renderView(); };
+    } else if(state.view==='practice' && state.session){
+      bindSession();
+    } else if(state.view==='stats'){
+      // static
+    }
+  }
+
+  function deleteWord(id){
+    state.words = state.words.filter(w=>w.id!==id);
+    saveWords();
+    renderView();
+  }
+
+  /* ================= MODALS: group / word / bulk ================= */
+  function openGroupModal(){ state.modal = {type:'group', emoji:EMOJIS[0], lang:'en'}; renderModal(); }
+  function openWordModal(){
+    if(state.groups.length===0){ openGroupModal(); return; }
+    const gid = state.activeGroup!=='all' ? state.activeGroup : state.groups[0].id;
+    state.modal = {type:'word', groupId:gid};
+    renderModal();
+  }
+  function openBulkModal(){
+    const gid = state.activeGroup!=='all' ? state.activeGroup : (state.groups[0] && state.groups[0].id);
+    state.modal = {type:'bulk', groupId:gid, text:''};
+    renderModal();
+  }
+  function closeModal(){ state.modal=null; renderModal(); }
+
+  function renderModal(){
+    const slot = document.getElementById('modal-slot');
+    if(!slot) return;
+    if(!state.modal){ slot.innerHTML=''; return; }
+    if(state.modal.type==='group') slot.innerHTML = groupModalHtml();
+    else if(state.modal.type==='word') slot.innerHTML = wordModalHtml();
+    else if(state.modal.type==='bulk') slot.innerHTML = bulkModalHtml();
+    bindModal();
+  }
+
+  function groupModalHtml(){
+    const m = state.modal;
+    return `
+    <div class="modal-backdrop" data-close-bg="1">
+      <div class="modal">
+        <div class="modal-head"><div class="modal-title">Новая группа</div><button class="modal-close" data-close="1">✕</button></div>
+        <label class="field-label">Название</label>
+        <input type="text" id="g-name" placeholder="Например: Кухня, Бизнес-лексика, B2B письма">
+        <label class="field-label">Язык слов (для звука и картинок)</label>
+        <select id="g-lang">${LANGS.map(l=>`<option value="${l.code}" ${l.code===m.lang?'selected':''}>${l.name}</option>`).join('')}</select>
+        <label class="field-label">Значок</label>
+        <div class="emoji-picker">${EMOJIS.map(e=>`<div class="emoji-opt ${e===m.emoji?'sel':''}" data-emoji="${e}">${e}</div>`).join('')}</div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" data-close="1">Отмена</button>
+          <button class="btn btn-accent" id="g-save">Создать</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function wordModalHtml(){
+    const m = state.modal;
+    return `
+    <div class="modal-backdrop" data-close-bg="1">
+      <div class="modal">
+        <div class="modal-head"><div class="modal-title">Новое слово</div><button class="modal-close" data-close="1">✕</button></div>
+        <label class="field-label">Группа</label>
+        <select id="w-group">${state.groups.map(g=>`<option value="${g.id}" ${g.id===m.groupId?'selected':''}>${g.emoji} ${esc(g.name)}</option>`).join('')}</select>
+        <div class="form-row">
+          <div>
+            <label class="field-label">Слово</label>
+            <input type="text" id="w-term" placeholder="apple">
+          </div>
+          <div>
+            <label class="field-label">Перевод</label>
+            <input type="text" id="w-translation" placeholder="яблоко">
+          </div>
+        </div>
+        <label class="field-label">Пример (необязательно)</label>
+        <textarea id="w-example" placeholder="I eat an apple every morning."></textarea>
+        <div class="hint">🖼️ Картинка подгрузится автоматически по слову.</div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" data-close="1">Отмена</button>
+          <button class="btn btn-accent" id="w-save">Добавить</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function bulkModalHtml(){
+    const m = state.modal;
+    if(state.groups.length===0){
+      return `<div class="modal-backdrop" data-close-bg="1"><div class="modal">
+        <div class="modal-head"><div class="modal-title">Сначала создай группу</div><button class="modal-close" data-close="1">✕</button></div>
+        <p class="hint">Чтобы импортировать слова, нужна хотя бы одна группа.</p>
+        <div class="modal-actions"><button class="btn btn-accent" id="bulk-mk-group">Создать группу</button></div>
+      </div></div>`;
+    }
+    return `
+    <div class="modal-backdrop" data-close-bg="1">
+      <div class="modal">
+        <div class="modal-head"><div class="modal-title">Импорт списка слов</div><button class="modal-close" data-close="1">✕</button></div>
+        <label class="field-label">В группу</label>
+        <select id="b-group">${state.groups.map(g=>`<option value="${g.id}" ${g.id===m.groupId?'selected':''}>${g.emoji} ${esc(g.name)}</option>`).join('')}</select>
+        <label class="field-label">Файл (.xlsx, .xls, .csv, .txt)</label>
+        <input type="file" id="b-file" accept=".csv,.txt,.tsv,.xlsx,.xls">
+        <label class="field-label">Или вставь таблицу вручную</label>
+        <textarea id="b-text" placeholder="apple	яблоко	I eat an apple
+book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</textarea>
+        <div class="hint">Формат в каждой строке: <b>слово</b>, <b>перевод</b>, необязательно <b>пример</b>. Загрузи готовый файл <b>.xlsx / .xls</b> — колонки подхватятся автоматически из первого листа. Так же можно вставить строки прямо из Excel/Google Sheets или .csv.</div>
+        <div id="b-preview" class="hint"></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" data-close="1">Отмена</button>
+          <button class="btn btn-accent" id="b-save">Импортировать</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function parseBulkText(text){
+    const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+    const rows = [];
+    for(const line of lines){
+      let parts;
+      if(line.includes('\t')) parts = line.split('\t');
+      else if(line.includes(';')) parts = line.split(';');
+      else parts = line.split(',');
+      parts = parts.map(p=>p.trim());
+      if(parts.length>=2 && parts[0] && parts[1]){
+        rows.push({term:parts[0], translation:parts[1], example:parts[2]||''});
+      }
+    }
+    return rows;
+  }
+
+  function bindModal(){
+    const m = state.modal;
+    if(!m) return;
+    root.querySelectorAll('[data-close]').forEach(b=>b.onclick = closeModal);
+    const bg = root.querySelector('[data-close-bg]');
+    if(bg) bg.onclick = (e)=>{ if(e.target===bg) closeModal(); };
+
+    if(m.type==='group'){
+      root.querySelectorAll('[data-emoji]').forEach(e=>{
+        e.onclick = ()=>{ state.modal.emoji = e.dataset.emoji; renderModal(); };
+      });
+      const langSel = root.querySelector('#g-lang');
+      if(langSel) langSel.onchange = ()=>{ state.modal.lang = langSel.value; };
+      root.querySelector('#g-save').onclick = ()=>{
+        const name = root.querySelector('#g-name').value.trim();
+        if(!name){ toast('Введи название группы'); return; }
+        const g = {id:uid(), name, emoji:state.modal.emoji, lang:root.querySelector('#g-lang').value};
+        state.groups.push(g);
+        saveGroups();
+        state.activeGroup = g.id;
+        closeModal();
+        renderView();
+      };
+    }
+
+    if(m.type==='word'){
+      root.querySelector('#w-save').onclick = async ()=>{
+        const groupId = root.querySelector('#w-group').value;
+        const term = root.querySelector('#w-term').value.trim();
+        const translation = root.querySelector('#w-translation').value.trim();
+        const example = root.querySelector('#w-example').value.trim();
+        if(!term || !translation){ toast('Заполни слово и перевод'); return; }
+        const w = {id:uid(), groupId, term, translation, example, image:null, box:0, nextReview:Date.now(), correct:0, wrong:0, createdAt:Date.now()};
+        state.words.push(w);
+        saveWords();
+        closeModal();
+        renderView();
+        const g = groupById(groupId);
+        const img = await fetchImage(term, g && g.lang);
+        if(img){
+          const found = state.words.find(x=>x.id===w.id);
+          if(found){ found.image = img; saveWords(); if(state.view==='library') renderView(); }
+        }
+      };
+    }
+
+    if(m.type==='bulk'){
+      const mk = root.querySelector('#bulk-mk-group');
+      if(mk){ mk.onclick = ()=>{ openGroupModal(); }; return; }
+      const fileInput = root.querySelector('#b-file');
+      const textArea = root.querySelector('#b-text');
+      const preview = root.querySelector('#b-preview');
+      function updatePreview(){
+        const rows = parseBulkText(textArea.value);
+        preview.textContent = rows.length ? `Найдено строк: ${rows.length}` : '';
+      }
+      textArea.oninput = updatePreview;
+      updatePreview();
+      if(fileInput){
+        fileInput.onchange = ()=>{
+          const f = fileInput.files[0];
+          if(!f) return;
+          const name = f.name.toLowerCase();
+          const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
+          if(isExcel){
+            if(typeof XLSX === 'undefined'){ toast('Не удалось загрузить модуль для Excel. Попробуй сохранить файл как .csv'); return; }
+            const reader = new FileReader();
+            reader.onload = (e)=>{
+              try{
+                const wb = XLSX.read(e.target.result, {type:'array'});
+                const sheet = wb.Sheets[wb.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+                const lines = rows
+                  .map(r => (r||[]).map(c=>String(c==null?'':c).trim()))
+                  .filter(r => r.length>=2 && r[0] && r[1])
+                  .map(r => r.slice(0,3).join('\t'));
+                textArea.value = lines.join('\n');
+                updatePreview();
+                if(lines.length===0) toast('В файле не нашлось строк вида слово / перевод');
+              }catch(err){
+                toast('Не получилось прочитать этот Excel-файл');
+              }
+            };
+            reader.readAsArrayBuffer(f);
+          } else {
+            const reader = new FileReader();
+            reader.onload = ()=>{ textArea.value = reader.result; updatePreview(); };
+            reader.readAsText(f);
+          }
+        };
+      }
+      root.querySelector('#b-save').onclick = async ()=>{
+        const groupId = root.querySelector('#b-group').value;
+        const rows = parseBulkText(textArea.value);
+        if(rows.length===0){ toast('Не удалось распознать ни одной строки'); return; }
+        const newWords = rows.map(r=>({
+          id:uid(), groupId, term:r.term, translation:r.translation, example:r.example||'',
+          image:null, box:0, nextReview:Date.now(), correct:0, wrong:0, createdAt:Date.now()
+        }));
+        state.words = state.words.concat(newWords);
+        saveWords();
+        closeModal();
+        renderView();
+        toast(`Импортировано слов: ${newWords.length}`);
+        const g = groupById(groupId);
+        const ids = newWords.map(w=>w.id);
+        Promise.all(newWords.map(w => fetchImage(w.term, g && g.lang).then(img => ({id:w.id, img}))))
+          .then(results=>{
+            let changed = false;
+            results.forEach(r=>{
+              if(!r.img) return;
+              const found = state.words.find(x=>x.id===r.id);
+              if(found){ found.image = r.img; changed = true; }
+            });
+            if(changed){
+              saveWords();
+              if(state.view==='library') renderView();
+            }
+          });
+      };
+    }
+  }
+
+  function toast(msg){
+    const slot = document.getElementById('toast-slot');
+    if(!slot) return;
+    slot.innerHTML = `<div class="toast">${esc(msg)}</div>`;
+    setTimeout(()=>{ if(slot) slot.innerHTML=''; }, 2600);
+  }
+
+  /* ================= PRACTICE PICKER ================= */
+  function practiceView(){
+    const gid = state.practiceGroup || 'all';
+    const pool = wordsIn(gid);
+    const due = dueWords(pool);
+    const groupOpts = [`<option value="all">Все группы (${state.words.length})</option>`]
+      .concat(state.groups.map(g=>`<option value="${g.id}" ${g.id===gid?'selected':''}>${g.emoji} ${esc(g.name)} (${wordsIn(g.id).length})</option>`))
+      .join('');
+
+    const enough = pool.length>=2;
+    const enoughMatch = pool.length>=4;
+
+    return `
+      <label class="field-label">Тренировать</label>
+      <select id="practice-group" style="margin-bottom:18px;">${groupOpts}</select>
+      <div class="hint" style="margin:-10px 0 16px;">К повторению сегодня: <b style="color:var(--accent)">${due.length}</b> из ${pool.length}</div>
+      <div class="mode-grid">
+        <div class="mode-card" data-mode="flash" data-group="${gid}" ${pool.length===0?'disabled':''}>
+          <div class="m-emoji">🗂️</div>
+          <div class="m-title">Флеш-карточки</div>
+          <div class="m-desc">Переворачивай карточку, оценивай себя — знал или нет. Классика Duocards.</div>
+        </div>
+        <div class="mode-card" data-mode="quiz" data-group="${gid}" ${!enough?'disabled':''}>
+          <div class="m-emoji">🎯</div>
+          <div class="m-title">Тест с вариантами</div>
+          <div class="m-desc">Выбери правильный перевод из четырёх вариантов.</div>
+        </div>
+        <div class="mode-card" data-mode="type" data-group="${gid}" ${pool.length===0?'disabled':''}>
+          <div class="m-emoji">⌨️</div>
+          <div class="m-title">Введи перевод</div>
+          <div class="m-desc">Впиши перевод сам — самый строгий способ проверить память.</div>
+        </div>
+        <div class="mode-card" data-mode="match" data-group="${gid}" ${!enoughMatch?'disabled':''}>
+          <div class="m-emoji">🧩</div>
+          <div class="m-title">Найди пару</div>
+          <div class="m-desc">Собери карточки в пары слово—перевод на скорость.</div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ================= SESSION ENGINE ================= */
+  function startSession(mode, groupId){
+    let pool = wordsIn(groupId);
+    if(pool.length===0){ toast('В этой группе пока нет слов'); return; }
+    let due = dueWords(pool);
+    let queue = (due.length>=Math.min(5,pool.length)) ? due : pool.slice();
+    // shuffle
+    queue = queue.slice().sort(()=>Math.random()-0.5);
+    if(mode!=='match') queue = queue.slice(0, Math.min(15, queue.length));
+
+    state.session = {
+      mode, groupId, queue, idx:0,
+      correct:0, wrong:0, flipped:false,
+      matchState: mode==='match' ? buildMatchState(queue.slice(0,6)) : null,
+      finished:false
+    };
+    renderView();
+  }
+
+  function currentWord(){ const s=state.session; return s.queue[s.idx]; }
+
+  function gradeWord(w, ok){
+    if(ok){
+      w.box = Math.min((w.box||0)+1, 6);
+      w.correct = (w.correct||0)+1;
+    } else {
+      w.box = 0;
+      w.wrong = (w.wrong||0)+1;
+    }
+    w.nextReview = Date.now() + BOX_INTERVALS[w.box]*DAY;
+    saveWords();
+    state.stats.totalReviews = (state.stats.totalReviews||0)+1;
+    touchStreak();
+  }
+
+  function advance(ok){
+    const s = state.session;
+    const w = currentWord();
+    if(w) gradeWord(w, ok);
+    if(ok) s.correct++; else s.wrong++;
+    s.idx++;
+    s.flipped = false;
+    if(s.idx >= s.queue.length) s.finished = true;
+    renderView();
+  }
+
+  function sessionView(){
+    const s = state.session;
+    if(s.finished) return sessionEndHtml();
+    if(s.mode==='flash') return flashHtml();
+    if(s.mode==='quiz') return quizHtml();
+    if(s.mode==='type') return typeHtml();
+    if(s.mode==='match') return matchHtml();
+    return '';
+  }
+
+  function sessionTopHtml(){
+    const s = state.session;
+    const total = s.mode==='match' ? (s.matchState.pairs.length) : s.queue.length;
+    const done = s.mode==='match' ? s.matchState.solved.length : s.idx;
+    const pct = total? Math.round(100*done/total) : 0;
+    return `
+      <div class="session-top">
+        <span>${done}/${total}</span>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <span data-exit="1" style="cursor:pointer;">✕ выйти</span>
+      </div>`;
+  }
+
+  function flashHtml(){
+    const s = state.session;
+    const w = currentWord();
+    const g = groupById(w.groupId);
+    return `
+    <div class="session-wrap">
+      ${sessionTopHtml()}
+      <div class="hint-tap">нажми на карточку, чтобы перевернуть</div>
+      <div class="flashcard ${s.flipped?'flipped':''}" id="fc">
+        <div class="flashcard-inner">
+          <div class="flashcard-face front">
+            <div class="fc-hole"></div>
+            <button class="speak-btn" data-speak-fc="1">🔊</button>
+            ${w.image?`<img class="fc-img" src="${w.image}">`:''}
+            <div class="fc-term">${esc(w.term)}</div>
+            <div class="fc-sub">${g?esc(g.name):''}</div>
+          </div>
+          <div class="flashcard-face back">
+            <div class="fc-hole"></div>
+            <div class="fc-translation">${esc(w.translation)}</div>
+            ${w.example?`<div class="fc-example">${esc(w.example)}</div>`:''}
+          </div>
+        </div>
+      </div>
+      ${s.flipped ? `
+        <div class="judge-row">
+          <button class="judge-btn judge-no" data-judge="0">✕ Не знал</button>
+          <button class="judge-btn judge-yes" data-judge="1">✓ Знал</button>
+        </div>` : `<div style="height:52px;"></div>`}
+    </div>`;
+  }
+
+  function quizHtml(){
+    const s = state.session;
+    const w = currentWord();
+    if(!s._opts || s._optsFor!==w.id){
+      const others = state.words.filter(x=>x.id!==w.id && x.groupId===w.groupId);
+      const pool = others.length>=3 ? others : state.words.filter(x=>x.id!==w.id);
+      const distractors = pool.slice().sort(()=>Math.random()-0.5).slice(0,3).map(x=>x.translation);
+      const opts = distractors.concat([w.translation]).sort(()=>Math.random()-0.5);
+      s._opts = opts; s._optsFor = w.id; s._answered=false;
+    }
+    return `
+    <div class="session-wrap">
+      ${sessionTopHtml()}
+      <div class="quiz-term">${esc(w.term)}</div>
+      <div class="quiz-options">
+        ${s._opts.map(o=>`<button class="opt-btn" data-answer="${esc(o)}">${esc(o)}</button>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  function typeHtml(){
+    const s = state.session;
+    const w = currentWord();
+    return `
+    <div class="session-wrap">
+      ${sessionTopHtml()}
+      <div class="quiz-term">${esc(w.term)}</div>
+      <div class="type-wrap">
+        <input type="text" class="type-input" id="type-in" placeholder="перевод..." autocomplete="off" autofocus>
+        <div class="type-feedback" id="type-fb"></div>
+        <div style="margin-top:14px;"><button class="btn btn-accent" id="type-check">Проверить</button></div>
+      </div>
+    </div>`;
+  }
+
+  function buildMatchState(words){
+    const left = words.map(w=>({key:w.id, side:'term', text:w.term, id:w.id}));
+    const right = words.map(w=>({key:w.id, side:'trans', text:w.translation, id:w.id}));
+    const cards = left.concat(right).sort(()=>Math.random()-0.5);
+    return {cards, pairs:words, solved:[], selected:null};
+  }
+
+  function matchHtml(){
+    const s = state.session;
+    const ms = s.matchState;
+    return `
+    <div class="session-wrap">
+      ${sessionTopHtml()}
+      <div class="match-grid">
+        ${ms.cards.map((c,i)=>{
+          const solved = ms.solved.includes(c.id);
+          const sel = ms.selected && ms.selected.i===i;
+          return `<div class="match-card ${solved?'done':''} ${sel?'sel':''}" data-mi="${i}">${esc(c.text)}</div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  function sessionEndHtml(){
+    const s = state.session;
+    const total = s.mode==='match' ? s.matchState.pairs.length : (s.correct+s.wrong);
+    return `
+    <div class="session-end">
+      <div class="big-emoji">${s.wrong===0?'🏆':'📚'}</div>
+      <h3>Сессия завершена</h3>
+      <p>Так держать — карточки не забываются сами.</p>
+      <div class="end-stats">
+        <div class="end-stat"><b>${s.mode==='match'?total:s.correct}</b><span>${s.mode==='match'?'пар найдено':'верно'}</span></div>
+        ${s.mode!=='match'?`<div class="end-stat"><b>${s.wrong}</b><span>не знал</span></div>`:''}
+        <div class="end-stat"><b>${state.stats.streak}</b><span>серия дней</span></div>
+      </div>
+      <button class="btn btn-accent" data-again="1">Ещё раз</button>
+      <button class="btn btn-ghost" data-exit="1" style="margin-left:10px;">К режимам</button>
+    </div>`;
+  }
+
+  function bindSession(){
+    const s = state.session;
+    root.querySelectorAll('[data-exit]').forEach(b=>b.onclick = ()=>{ state.session=null; renderView(); });
+    if(s.finished){
+      const again = root.querySelector('[data-again]');
+      if(again) again.onclick = ()=> startSession(s.mode, s.groupId);
+      return;
+    }
+    if(s.mode==='flash'){
+      const fc = root.querySelector('#fc');
+      if(fc) fc.onclick = (e)=>{
+        if(e.target.closest('[data-speak-fc]')) return;
+        s.flipped = !s.flipped; renderView();
+      };
+      const sb = root.querySelector('[data-speak-fc]');
+      if(sb) sb.onclick = ()=>{ const w=currentWord(); const g=groupById(w.groupId); speak(w.term, g&&g.lang); };
+      root.querySelectorAll('[data-judge]').forEach(b=>{
+        b.onclick = ()=> advance(b.dataset.judge==='1');
+      });
+    }
+    if(s.mode==='quiz'){
+      root.querySelectorAll('[data-answer]').forEach(b=>{
+        b.onclick = ()=>{
+          if(s._answered) return;
+          s._answered = true;
+          const w = currentWord();
+          const ok = b.dataset.answer===w.translation;
+          root.querySelectorAll('[data-answer]').forEach(o=>{
+            o.setAttribute('disabled','1');
+            if(o.dataset.answer===w.translation) o.classList.add('correct');
+            else if(o===b) o.classList.add('wrong');
+          });
+          setTimeout(()=>advance(ok), 700);
+        };
+      });
+    }
+    if(s.mode==='type'){
+      const input = root.querySelector('#type-in');
+      const fb = root.querySelector('#type-fb');
+      const check = root.querySelector('#type-check');
+      function doCheck(){
+        if(check.disabled) return;
+        check.disabled = true;
+        const w = currentWord();
+        const val = (input.value||'').trim().toLowerCase();
+        const ok = val === (w.translation||'').trim().toLowerCase();
+        fb.textContent = ok ? '✓ верно!' : `✕ верный ответ: ${w.translation}`;
+        fb.className = 'type-feedback ' + (ok?'ok':'bad');
+        setTimeout(()=>advance(ok), 900);
+      }
+      if(check) check.onclick = doCheck;
+      if(input){
+        input.focus();
+        input.onkeydown = (e)=>{ if(e.key==='Enter') doCheck(); };
+      }
+    }
+    if(s.mode==='match'){
+      const ms = s.matchState;
+      root.querySelectorAll('[data-mi]').forEach(el=>{
+        el.onclick = ()=>{
+          const i = parseInt(el.dataset.mi,10);
+          const card = ms.cards[i];
+          if(ms.solved.includes(card.id)) return;
+          if(!ms.selected){ ms.selected = {i, card}; renderView(); return; }
+          if(ms.selected.i===i){ ms.selected=null; renderView(); return; }
+          if(ms.selected.card.id===card.id && ms.selected.card.side!==card.side){
+            ms.solved.push(card.id);
+            ms.selected = null;
+            const w = state.words.find(x=>x.id===card.id);
+            if(w) gradeWord(w, true);
+            if(ms.solved.length===ms.pairs.length){ s.finished=true; }
+            renderView();
+          } else {
+            el.classList.add('wrong-flash');
+            const prevI = ms.selected.i;
+            ms.selected = null;
+            setTimeout(()=>{ renderView(); }, 450);
+          }
+        };
+      });
+    }
+  }
+
+  /* ================= STATS ================= */
+  function statsView(){
+    const total = state.words.length;
+    const mastered = state.words.filter(w=>(w.box||0)>=5).length;
+    const due = dueWords(state.words).length;
+    const byBox = [0,1,2,3,4,5,6].map(b=>state.words.filter(w=>(w.box||0)===b).length);
+    const max = Math.max(1,...byBox);
+    return `
+      <div class="stat-grid">
+        <div class="stat-box"><b>${total}</b><span>слов всего</span></div>
+        <div class="stat-box"><b>${mastered}</b><span>выучено</span></div>
+        <div class="stat-box"><b>${due}</b><span>на повтор</span></div>
+      </div>
+      <div class="panel">
+        <span class="eyebrow">Распределение по уровням памяти</span>
+        ${byBox.map((n,b)=>`
+          <div class="box-bar">
+            <div class="lbl">box ${b}</div>
+            <div class="track"><div class="fill" style="width:${(n/max*100)||0}%"></div></div>
+            <div class="n">${n}</div>
+          </div>`).join('')}
+        <div class="hint">Box 0 — только что добавлено или забыто. Box 6 — прочно выучено. Каждый верный ответ поднимает слово на уровень, ошибка сбрасывает в 0.</div>
+      </div>
+      <div class="panel">
+        <span class="eyebrow">Группы</span>
+        ${state.groups.map(g=>{
+          const n = wordsIn(g.id).length;
+          const m = wordsIn(g.id).filter(w=>(w.box||0)>=5).length;
+          return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;">
+            <span>${g.emoji} ${esc(g.name)}</span><span style="color:var(--text-muted);">${m}/${n} выучено</span></div>`;
+        }).join('') || '<div class="hint">Пока нет групп.</div>'}
+      </div>
+    `;
+  }
+
+  /* ---------------- init ---------------- */
+  (async function init(){
+    root.innerHTML = `<div style="padding:60px;text-align:center;color:var(--text-muted);font-family:var(--mono);">загрузка картотеки…</div>`;
+    await loadAll();
+    render();
+  })();
+
+})();
+</script>
+</body>
+</html>
