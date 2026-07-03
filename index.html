@@ -99,7 +99,7 @@
   .word-row{
     display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid rgba(255,255,255,0.06);
   }
-  .word-thumb{width:38px;height:38px;border-radius:4px;object-fit:cover;background:var(--bg-3);flex-shrink:0;}
+  .word-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;object-position:center;background:var(--bg-3);flex-shrink:0;}
   .word-thumb.placeholder{display:flex;align-items:center;justify-content:center;font-size:16px;}
   .word-main{flex:1;min-width:0;}
   .word-term{font-family:var(--serif);font-size:15.5px;color:var(--text);}
@@ -157,31 +157,31 @@
   .progress-track{flex:1;height:4px;background:var(--bg-3);border-radius:2px;margin:0 12px;overflow:hidden;}
   .progress-fill{height:100%;background:var(--accent);transition:width .25s;}
 
+  .card-stack{position:relative;width:100%;max-width:380px;margin:0 auto 18px;min-height:380px;}
+  .ghost-card{position:absolute;left:0;right:0;top:0;height:100%;background:var(--card-2);border-radius:14px;}
+  .ghost-card.g1{transform:scale(0.96) translateY(10px);opacity:0.65;z-index:1;}
+  .ghost-card.g2{transform:scale(0.92) translateY(20px);opacity:0.35;z-index:0;}
   .flashcard{
-    width:100%;max-width:380px;aspect-ratio:5/3.4;perspective:1200px;cursor:pointer;margin-bottom:20px;
+    position:relative;z-index:2;width:100%;min-height:380px;background:var(--card);color:var(--ink);
+    border-radius:14px;border-left:6px solid var(--accent);
+    box-shadow:0 14px 34px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.05);
+    padding:28px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    touch-action:pan-y;cursor:grab;user-select:none;transition:transform .35s cubic-bezier(.2,.7,.3,1);
   }
-  .flashcard-inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d;}
-  .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
-  .flashcard-face{
-    position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;
-    background:var(--card);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.05);
-    border-left:6px solid var(--accent);
-  }
-  .flashcard-face.back{transform:rotateY(180deg);background:var(--card-2);}
-  .fc-hole{position:absolute;top:14px;left:14px;width:10px;height:10px;border-radius:50%;background:var(--bg);box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);}
-  .fc-term{font-family:var(--serif);font-size:28px;font-weight:700;text-align:center;}
-  .fc-sub{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:8px;text-transform:uppercase;letter-spacing:1px;}
-  .fc-translation{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--teal);text-align:center;}
-  .fc-example{font-size:13px;font-style:italic;color:var(--ink-soft);margin-top:10px;text-align:center;max-width:90%;}
-  .fc-img{width:100%;max-height:90px;object-fit:cover;border-radius:6px;margin-bottom:10px;}
-  .speak-btn{position:absolute;top:12px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-soft);}
-
-  .judge-row{display:flex;gap:12px;width:100%;max-width:380px;}
-  .judge-btn{flex:1;padding:14px 10px;border-radius:8px;font-family:var(--sans);font-weight:700;font-size:14px;border:none;cursor:pointer;}
-  .judge-no{background:rgba(193,85,77,0.18);color:#F0A79F;border:1px solid rgba(193,85,77,0.4);}
-  .judge-yes{background:rgba(78,148,130,0.2);color:#9FE0CD;border:1px solid rgba(78,148,130,0.45);}
-  .hint-tap{font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-bottom:14px;}
+  .flashcard.dragging{transition:none;cursor:grabbing;}
+  .stamp{position:absolute;top:22px;padding:7px 16px;border:3px solid;border-radius:8px;font-weight:800;font-size:15px;
+    letter-spacing:1px;text-transform:uppercase;opacity:0;pointer-events:none;font-family:var(--sans);}
+  .stamp-yes{right:18px;color:#4FAE7C;border-color:#4FAE7C;transform:rotate(12deg);}
+  .stamp-no{left:18px;color:var(--danger);border-color:var(--danger);transform:rotate(-12deg);}
+  .fc-img{width:112px;height:112px;border-radius:50%;object-fit:cover;margin-bottom:16px;box-shadow:0 6px 16px rgba(0,0,0,0.25);}
+  .fc-img.placeholder{display:flex;align-items:center;justify-content:center;font-size:46px;background:var(--card-2);}
+  .fc-term-row{display:flex;align-items:center;justify-content:center;gap:8px;}
+  .fc-term{font-family:var(--serif);font-size:26px;font-weight:700;}
+  .fc-translation{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--teal);margin-top:8px;}
+  .fc-divider{width:70%;height:1px;background:rgba(0,0,0,0.12);margin:16px 0;}
+  .fc-example-row{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-style:italic;color:var(--ink-soft);max-width:92%;}
+  .speak-inline{background:none;border:none;font-size:17px;cursor:pointer;color:var(--ink-soft);flex-shrink:0;}
+  .hint-tap{font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-bottom:14px;text-align:center;}
 
   /* Quiz */
   .quiz-term{font-family:var(--serif);font-size:26px;text-align:center;margin:20px 0 26px;}
@@ -266,11 +266,13 @@
     .word-term{font-size:14.5px;}
     .quiz-term{font-size:21px;}
     .opt-btn{padding:14px 12px;font-size:14.5px;}
-    .flashcard{max-width:100%;}
-    .fc-term{font-size:clamp(20px,7vw,26px);}
-    .fc-translation{font-size:clamp(18px,6vw,22px);}
-    .fc-example{font-size:12px;}
-    .judge-btn{padding:15px 8px;font-size:13.5px;}
+    .flashcard{max-width:100%;min-height:340px;padding:22px 16px;}
+    .card-stack{min-height:340px;}
+    .fc-img{width:92px;height:92px;}
+    .fc-term{font-size:clamp(20px,7vw,25px);}
+    .fc-translation{font-size:clamp(17px,6vw,21px);}
+    .fc-example-row{font-size:12.5px;}
+    .stamp{font-size:13px;padding:6px 12px;}
     .match-grid{gap:6px;}
     .match-card{font-size:12px;padding:10px 6px;min-height:48px;}
     .mode-card{padding:14px;}
@@ -282,7 +284,7 @@
     .session-end{padding:20px 6px;}
   }
   @media (hover:none){
-    .btn, .opt-btn, .mode-card, .icon-btn, .group-chip, .match-card, .judge-btn{ -webkit-tap-highlight-color:transparent; }
+    .btn, .opt-btn, .mode-card, .icon-btn, .group-chip, .match-card, .flashcard{ -webkit-tap-highlight-color:transparent; }
   }
 </style>
 </head>
@@ -947,32 +949,36 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
   function flashHtml(){
     const s = state.session;
     const w = currentWord();
-    const g = groupById(w.groupId);
+    const remaining = s.queue.length - s.idx;
+    const imgHtml = w.image
+      ? `<img class="fc-img" src="${w.image}">`
+      : `<div class="fc-img placeholder">${(groupById(w.groupId)||{}).emoji||'📘'}</div>`;
     return `
     <div class="session-wrap">
       ${sessionTopHtml()}
-      <div class="hint-tap">нажми на карточку, чтобы перевернуть</div>
-      <div class="flashcard ${s.flipped?'flipped':''}" id="fc">
-        <div class="flashcard-inner">
-          <div class="flashcard-face front">
-            <div class="fc-hole"></div>
-            <button class="speak-btn" data-speak-fc="1">🔊</button>
-            ${w.image?`<img class="fc-img" src="${w.image}">`:''}
-            <div class="fc-term">${esc(w.term)}</div>
-            <div class="fc-sub">${g?esc(g.name):''}</div>
+      <div class="hint-tap">нажми — посмотреть перевод · потяни карточку: вправо — знал, влево — не знал</div>
+      <div class="card-stack">
+        ${remaining>2?`<div class="ghost-card g2"></div>`:''}
+        ${remaining>1?`<div class="ghost-card g1"></div>`:''}
+        <div class="flashcard" id="fc">
+          <div class="stamp stamp-yes" id="stamp-yes">Знал</div>
+          <div class="stamp stamp-no" id="stamp-no">Не знал</div>
+          ${imgHtml}
+          <div class="fc-term-row">
+            <button class="speak-inline" data-speak-fc="1">🔊</button>
+            <span class="fc-term">${esc(w.term)}</span>
           </div>
-          <div class="flashcard-face back">
-            <div class="fc-hole"></div>
+          ${s.flipped ? `
             <div class="fc-translation">${esc(w.translation)}</div>
-            ${w.example?`<div class="fc-example">${esc(w.example)}</div>`:''}
-          </div>
+            ${w.example ? `
+              <div class="fc-divider"></div>
+              <div class="fc-example-row">
+                <button class="speak-inline" data-speak-ex="1">🔊</button>
+                <span>${esc(w.example)}</span>
+              </div>` : ''}
+          ` : ''}
         </div>
       </div>
-      ${s.flipped ? `
-        <div class="judge-row">
-          <button class="judge-btn judge-no" data-judge="0">✕ Не знал</button>
-          <button class="judge-btn judge-yes" data-judge="1">✓ Знал</button>
-        </div>` : `<div style="height:52px;"></div>`}
     </div>`;
   }
 
@@ -1062,15 +1068,59 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     }
     if(s.mode==='flash'){
       const fc = root.querySelector('#fc');
-      if(fc) fc.onclick = (e)=>{
-        if(e.target.closest('[data-speak-fc]')) return;
-        s.flipped = !s.flipped; renderView();
-      };
+      const stampYes = root.querySelector('#stamp-yes');
+      const stampNo = root.querySelector('#stamp-no');
       const sb = root.querySelector('[data-speak-fc]');
-      if(sb) sb.onclick = ()=>{ const w=currentWord(); const g=groupById(w.groupId); speak(w.term, g&&g.lang); };
-      root.querySelectorAll('[data-judge]').forEach(b=>{
-        b.onclick = ()=> advance(b.dataset.judge==='1');
-      });
+      if(sb) sb.onclick = (e)=>{ e.stopPropagation(); const w=currentWord(); const g=groupById(w.groupId); speak(w.term, g&&g.lang); };
+      const sbEx = root.querySelector('[data-speak-ex]');
+      if(sbEx) sbEx.onclick = (e)=>{ e.stopPropagation(); const w=currentWord(); const g=groupById(w.groupId); speak(w.example, g&&g.lang); };
+
+      if(fc){
+        let startX=0, startY=0, dx=0, dragging=false, pointerId=null;
+        const THRESHOLD = 90;
+
+        function onDown(e){
+          if(e.target.closest('[data-speak-fc]') || e.target.closest('[data-speak-ex]')) return;
+          pointerId = e.pointerId;
+          startX = e.clientX; startY = e.clientY; dx = 0; dragging = false;
+          fc.setPointerCapture(pointerId);
+        }
+        function onMove(e){
+          if(pointerId===null || e.pointerId!==pointerId) return;
+          const ddx = e.clientX - startX;
+          const ddy = e.clientY - startY;
+          if(!dragging && Math.abs(ddx) < 6) return;
+          if(!dragging && Math.abs(ddy) > Math.abs(ddx)) return; // vertical scroll intent, ignore
+          dragging = true;
+          dx = ddx;
+          fc.classList.add('dragging');
+          fc.style.transform = `translateX(${dx}px) rotate(${dx/18}deg)`;
+          const frac = Math.min(Math.abs(dx)/THRESHOLD, 1);
+          if(dx>0){ stampYes.style.opacity = frac; stampNo.style.opacity = 0; }
+          else { stampNo.style.opacity = frac; stampYes.style.opacity = 0; }
+        }
+        function onUp(e){
+          if(pointerId===null || e.pointerId!==pointerId) return;
+          fc.classList.remove('dragging');
+          if(dragging && Math.abs(dx) > THRESHOLD){
+            const ok = dx > 0;
+            const flyX = ok ? window.innerWidth : -window.innerWidth;
+            fc.style.transform = `translateX(${flyX}px) rotate(${dx/18}deg)`;
+            fc.style.opacity = '0';
+            setTimeout(()=> advance(ok), 220);
+          } else if(dragging){
+            fc.style.transform = '';
+            stampYes.style.opacity = 0; stampNo.style.opacity = 0;
+          } else {
+            s.flipped = !s.flipped; renderView();
+          }
+          pointerId = null; dragging = false; dx = 0;
+        }
+        fc.onpointerdown = onDown;
+        fc.onpointermove = onMove;
+        fc.onpointerup = onUp;
+        fc.onpointercancel = onUp;
+      }
     }
     if(s.mode==='quiz'){
       root.querySelectorAll('[data-answer]').forEach(b=>{
