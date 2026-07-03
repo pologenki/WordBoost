@@ -225,15 +225,34 @@
   .end-stat span{font-size:11px;color:var(--text-muted);text-transform:uppercase;}
 
   /* Stats view */
-  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;}
   .stat-box{background:var(--bg-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:14px;text-align:center;}
   .stat-box b{display:block;font-family:var(--serif);font-size:24px;color:var(--accent);}
   .stat-box span{font-size:11px;color:var(--text-muted);font-family:var(--mono);text-transform:uppercase;}
-  .box-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-  .box-bar .lbl{width:80px;font-family:var(--mono);font-size:11px;color:var(--text-muted);}
-  .box-bar .track{flex:1;height:10px;background:var(--bg-3);border-radius:5px;overflow:hidden;}
-  .box-bar .fill{height:100%;background:var(--teal);}
-  .box-bar .n{width:30px;text-align:right;font-family:var(--mono);font-size:12px;}
+
+  .hero-panel{text-align:center;padding:26px 16px;}
+  .hero-ring{width:136px;height:136px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;}
+  .hero-ring-inner{width:108px;height:108px;border-radius:50%;background:var(--bg-2);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .hero-ring-inner b{font-family:var(--serif);font-size:28px;color:var(--accent);line-height:1;}
+  .hero-ring-inner span{font-family:var(--mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;margin-top:4px;}
+  .hero-caption{font-size:14px;color:var(--text);margin-top:2px;}
+  .hero-caption b{color:var(--accent);}
+
+  .seg-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--bg-3);margin:6px 0 12px;}
+  .seg-bar .seg{height:100%;transition:width .3s;}
+  .seg-fresh{background:var(--ink-soft);}
+  .seg-learning{background:var(--accent);}
+  .seg-learned{background:var(--teal);}
+  .seg-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-muted);}
+  .seg-legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+
+  .group-stat-row{padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+  .group-stat-row:last-child{border-bottom:none;}
+  .group-stat-top{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:7px;}
+  .group-stat-top .gname{display:flex;align-items:center;gap:6px;}
+  .group-stat-top .gnum{color:var(--text-muted);font-family:var(--mono);font-size:12px;}
+  .group-stat-bar{height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden;}
+  .group-stat-fill{height:100%;background:var(--teal);}
 
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);
     padding:10px 18px;border-radius:6px;font-size:13px;font-weight:600;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,0.4);}
@@ -257,10 +276,10 @@
     .brand-sub{font-size:9.5px;letter-spacing:1px;}
     .streak-badge{font-size:11px;padding:5px 8px;}
     .tabs{gap:0;}
-    .tab-btn{font-size:11px;padding:9px 8px;flex:1;text-align:center;}
+    .tab-btn{font-size:12px;padding:11px 8px;flex:1;text-align:center;}
     .group-row{gap:6px;}
     .group-chip{font-size:11.5px;padding:7px 9px 7px 8px;}
-    .btn{min-height:42px;}
+    .btn{min-height:46px;font-size:15px;}
     .modal-backdrop{padding:0;align-items:stretch;}
     .modal{max-width:100%;border-radius:0;min-height:100vh;padding:18px 16px 28px;}
     .modal-title{font-size:17px;}
@@ -268,24 +287,45 @@
     .word-row{flex-wrap:wrap;row-gap:4px;}
     .word-box{order:5;width:100%;padding-left:50px;margin-top:-2px;}
     .word-term{font-size:14.5px;}
-    .quiz-term{font-size:21px;}
-    .opt-btn{padding:14px 12px;font-size:14.5px;}
-    .flashcard{max-width:100%;min-height:340px;padding:22px 16px;}
-    .card-stack{min-height:340px;}
-    .fc-img{width:92px;height:92px;}
-    .fc-term{font-size:clamp(20px,7vw,25px);}
-    .fc-translation{font-size:clamp(17px,6vw,21px);}
-    .fc-example-row{font-size:12.5px;}
-    .stamp{font-size:13px;padding:6px 12px;}
-    .match-grid{gap:6px;}
-    .match-card{font-size:12px;padding:10px 6px;min-height:48px;}
-    .mode-card{padding:14px;}
+
+    /* Training screens — bigger everything */
+    .practice-group-select{font-size:16px;padding:13px 10px;}
+    .mode-grid{gap:10px;}
+    .mode-card{padding:18px 16px;}
+    .mode-card .m-emoji{font-size:30px;}
+    .mode-card .m-title{font-size:18px;margin:10px 0 5px;}
+    .mode-card .m-desc{font-size:13.5px;line-height:1.5;}
+    .session-top{font-size:13px;margin-bottom:20px;}
+    .progress-track{height:6px;}
+    .quiz-term{font-size:26px;margin:24px 0 30px;}
+    .opt-btn{padding:18px 16px;font-size:16.5px;}
+    .type-input{font-size:22px;padding:16px;}
+    .type-feedback{font-size:14.5px;}
+    #type-check{min-height:50px;font-size:16px;padding:12px 20px;}
+    .flashcard{max-width:100%;min-height:360px;padding:24px 18px;}
+    .card-stack{min-height:360px;}
+    .fc-img{width:100px;height:100px;}
+    .fc-term{font-size:clamp(22px,7.5vw,27px);}
+    .fc-translation{font-size:clamp(19px,6.5vw,23px);}
+    .fc-example-row{font-size:13.5px;}
+    .hint-tap{font-size:11.5px;line-height:1.5;padding:0 10px;}
+    .stamp{font-size:14px;padding:7px 14px;}
+    .match-grid{gap:8px;}
+    .match-card{font-size:14px;padding:14px 8px;min-height:58px;}
     .icon-btn{font-size:16px;padding:8px 9px;}
-    .stat-grid{gap:8px;}
-    .stat-box{padding:11px;}
-    .stat-box b{font-size:20px;}
     .end-stats{gap:14px;flex-wrap:wrap;}
+    .end-stat b{font-size:26px;}
     .session-end{padding:20px 6px;}
+    .session-end h3{font-size:24px;}
+    .session-end p{font-size:15px;}
+
+    /* Stats screen */
+    .hero-ring{width:150px;height:150px;}
+    .hero-ring-inner{width:120px;height:120px;}
+    .hero-ring-inner b{font-size:32px;}
+    .stat-grid{gap:8px;}
+    .stat-box{padding:14px 10px;}
+    .stat-box b{font-size:22px;}
   }
   @media (hover:none){
     .btn, .opt-btn, .mode-card, .icon-btn, .group-chip, .match-card, .flashcard{ -webkit-tap-highlight-color:transparent; }
@@ -854,7 +894,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
 
     return `
       <label class="field-label">Тренировать</label>
-      <select id="practice-group" style="margin-bottom:18px;">${groupOpts}</select>
+      <select id="practice-group" class="practice-group-select" style="margin-bottom:18px;">${groupOpts}</select>
       <div class="hint" style="margin:-10px 0 16px;">К повторению сегодня: <b style="color:var(--accent)">${due.length}</b> из ${pool.length}</div>
       <div class="mode-grid">
         <div class="mode-card" data-mode="flash" data-group="${gid}" ${pool.length===0?'disabled':''}>
@@ -1192,33 +1232,64 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
   /* ================= STATS ================= */
   function statsView(){
     const total = state.words.length;
-    const mastered = state.words.filter(w=>(w.box||0)>=5).length;
+    if(total === 0){
+      return `<div class="empty-state"><div class="big-emoji">📊</div><p>Как только добавишь слова и потренируешься — здесь появится статистика.</p></div>`;
+    }
+    const learned = state.words.filter(w=>(w.box||0)>=5).length;
+    const learning = state.words.filter(w=>{ const b=w.box||0; return b>=2 && b<5; }).length;
+    const fresh = total - learned - learning;
     const due = dueWords(state.words).length;
-    const byBox = [0,1,2,3,4,5,6].map(b=>state.words.filter(w=>(w.box||0)===b).length);
-    const max = Math.max(1,...byBox);
+    const pct = Math.round(100*learned/total);
+
+    let attempts=0, correct=0;
+    state.words.forEach(w=>{ attempts += (w.correct||0)+(w.wrong||0); correct += (w.correct||0); });
+    const accuracy = attempts>0 ? Math.round(100*correct/attempts) : null;
+
     return `
+      <div class="panel hero-panel">
+        <div class="hero-ring" style="background:conic-gradient(var(--teal) ${pct}%, var(--bg-3) 0)">
+          <div class="hero-ring-inner">
+            <b>${pct}%</b>
+            <span>выучено</span>
+          </div>
+        </div>
+        <div class="hero-caption">Выучено <b>${learned}</b> слов из <b>${total}</b></div>
+      </div>
+
       <div class="stat-grid">
-        <div class="stat-box"><b>${total}</b><span>слов всего</span></div>
-        <div class="stat-box"><b>${mastered}</b><span>выучено</span></div>
-        <div class="stat-box"><b>${due}</b><span>на повтор</span></div>
+        <div class="stat-box"><b>${due}</b><span>на повтор сегодня</span></div>
+        <div class="stat-box"><b>${accuracy!==null ? accuracy+'%' : '—'}</b><span>точность ответов</span></div>
       </div>
+
       <div class="panel">
-        <span class="eyebrow">Распределение по уровням памяти</span>
-        ${byBox.map((n,b)=>`
-          <div class="box-bar">
-            <div class="lbl">box ${b}</div>
-            <div class="track"><div class="fill" style="width:${(n/max*100)||0}%"></div></div>
-            <div class="n">${n}</div>
-          </div>`).join('')}
-        <div class="hint">Box 0 — только что добавлено или забыто. Box 6 — прочно выучено. Каждый верный ответ поднимает слово на уровень, ошибка сбрасывает в 0.</div>
+        <span class="eyebrow">Прогресс по словам</span>
+        <div class="seg-bar">
+          ${fresh>0?`<div class="seg seg-fresh" style="width:${fresh/total*100}%"></div>`:''}
+          ${learning>0?`<div class="seg seg-learning" style="width:${learning/total*100}%"></div>`:''}
+          ${learned>0?`<div class="seg seg-learned" style="width:${learned/total*100}%"></div>`:''}
+        </div>
+        <div class="seg-legend">
+          <span><span class="dot" style="background:var(--ink-soft)"></span>Новые — ${fresh}</span>
+          <span><span class="dot" style="background:var(--accent)"></span>Учу — ${learning}</span>
+          <span><span class="dot" style="background:var(--teal)"></span>Выучено — ${learned}</span>
+        </div>
+        <div class="hint">Слово переходит из «Новые» в «Учу», а потом в «Выучено» по мере того, как ты правильно отвечаешь на тренировках. Ошибка возвращает его в начало.</div>
       </div>
+
       <div class="panel">
-        <span class="eyebrow">Группы</span>
+        <span class="eyebrow">По группам</span>
         ${state.groups.map(g=>{
-          const n = wordsIn(g.id).length;
-          const m = wordsIn(g.id).filter(w=>(w.box||0)>=5).length;
-          return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;">
-            <span>${g.emoji} ${esc(g.name)}</span><span style="color:var(--text-muted);">${m}/${n} выучено</span></div>`;
+          const gw = wordsIn(g.id);
+          const n = gw.length;
+          const m = gw.filter(w=>(w.box||0)>=5).length;
+          const gpct = n>0 ? Math.round(100*m/n) : 0;
+          return `<div class="group-stat-row">
+            <div class="group-stat-top">
+              <span class="gname">${g.emoji} ${esc(g.name)}</span>
+              <span class="gnum">${m}/${n}</span>
+            </div>
+            <div class="group-stat-bar"><div class="group-stat-fill" style="width:${gpct}%"></div></div>
+          </div>`;
         }).join('') || '<div class="hint">Пока нет групп.</div>'}
       </div>
     `;
