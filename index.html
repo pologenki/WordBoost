@@ -86,15 +86,31 @@
   .panel{background:var(--bg-2);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
 
   /* Group tabs (folder tabs) */
-  .group-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+  .group-row{display:flex;gap:8px;margin-bottom:18px;overflow-x:auto;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .group-row::-webkit-scrollbar{display:none;}
   .group-chip{
-    font-family:var(--mono);font-size:12.5px;padding:7px 12px 7px 10px;border-radius:3px 3px 0 0;
-    background:var(--bg-3);border:1px solid rgba(255,255,255,0.08);border-bottom:none;color:var(--text-muted);
-    cursor:pointer;display:flex;align-items:center;gap:6px;position:relative;top:1px;
+    flex-shrink:0;font-family:var(--mono);font-size:12.5px;padding:9px 15px;border-radius:999px;
+    background:var(--bg-2);border:1px solid rgba(255,255,255,0.1);color:var(--text-muted);white-space:nowrap;
+    cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s,border-color .15s,color .15s;
   }
-  .group-chip.active{background:var(--card);color:var(--ink);border-color:var(--card);font-weight:700;}
-  .group-chip .count{opacity:0.65;font-size:11px;}
-  .group-chip.add{border-style:dashed;color:var(--accent);}
+  .group-chip.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;}
+  .group-chip .count{opacity:0.7;font-size:11px;}
+  .group-chip.add{border-style:dashed;color:var(--accent);background:transparent;}
+
+  .fab{
+    position:fixed;right:20px;bottom:86px;z-index:41;width:56px;height:56px;border-radius:50%;
+    background:var(--accent);color:var(--accent-ink);border:none;font-size:26px;font-weight:400;line-height:1;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(0,0,0,0.45);cursor:pointer;
+    transition:transform .15s;
+  }
+  .fab:active{transform:scale(0.94);}
+  .fab-backdrop{position:fixed;inset:0;z-index:39;}
+  .fab-menu{position:fixed;right:20px;bottom:152px;z-index:41;display:flex;flex-direction:column;gap:10px;align-items:flex-end;}
+  .fab-menu-item{
+    display:flex;align-items:center;gap:8px;background:var(--bg-2);border:1px solid rgba(255,255,255,0.14);
+    color:var(--text);padding:11px 18px;border-radius:999px;font-size:13.5px;font-family:var(--sans);font-weight:600;
+    cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.35);white-space:nowrap;
+  }
 
   /* Library list */
   .word-list{border-top:1px solid rgba(255,255,255,0.08);}
@@ -282,7 +298,7 @@
     .nav-btn{font-size:10px;}
     .nav-btn .nav-icon{font-size:22px;}
     .group-row{gap:6px;}
-    .group-chip{font-size:11.5px;padding:7px 9px 7px 8px;}
+    .group-chip{font-size:12px;padding:9px 13px;}
     .btn{min-height:46px;font-size:15px;}
     .modal-backdrop{padding:0;align-items:stretch;}
     .modal{max-width:100%;border-radius:0;min-height:100vh;padding:18px 16px 28px;}
@@ -514,6 +530,7 @@
       <div id="view-slot"></div>
       <div id="modal-slot"></div>
       <div id="toast-slot"></div>
+      ${state.view==='library' ? fabHtml() : ''}
       <div class="bottom-nav"><div class="bottom-nav-inner">
         ${navBtn('library','📖','Библиотека')}
         ${navBtn('practice','🎯','Тренировка')}
@@ -524,6 +541,28 @@
     renderView();
     renderModal();
     bindBottomNav();
+    bindFab();
+  }
+  function fabHtml(){
+    return `
+      ${state.fabOpen ? `
+        <div class="fab-backdrop" data-fab-close="1"></div>
+        <div class="fab-menu">
+          <button class="fab-menu-item" data-fab-add-word="1">✏️ Добавить слово</button>
+          <button class="fab-menu-item" data-fab-bulk="1">📥 Импорт из файла</button>
+        </div>` : ''}
+      <button class="fab" id="fab-btn">${state.fabOpen ? '✕' : '+'}</button>
+    `;
+  }
+  function bindFab(){
+    const fabBtn = root.querySelector('#fab-btn');
+    if(fabBtn) fabBtn.onclick = ()=>{ state.fabOpen = !state.fabOpen; render(); };
+    const bg = root.querySelector('[data-fab-close]');
+    if(bg) bg.onclick = ()=>{ state.fabOpen = false; render(); };
+    const addW = root.querySelector('[data-fab-add-word]');
+    if(addW) addW.onclick = ()=>{ state.fabOpen = false; openWordModal(); };
+    const bulk = root.querySelector('[data-fab-bulk]');
+    if(bulk) bulk.onclick = ()=>{ state.fabOpen = false; openBulkModal(); };
   }
   function navBtn(id,icon,label){
     return `<button class="nav-btn ${state.view===id?'active':''}" data-tab="${id}">
@@ -576,10 +615,6 @@
 
     return `
       <div class="group-row">${chips}</div>
-      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="btn btn-accent" data-add-word="1">+ Добавить слово</button>
-        <button class="btn btn-ghost" data-bulk="1">📥 Импорт из файла / таблицы</button>
-      </div>
       <div class="word-list">${rows}</div>
     `;
   }
@@ -610,10 +645,6 @@
       });
       const addG = root.querySelector('[data-newgroup]');
       if(addG) addG.onclick = () => openGroupModal();
-      const addW = root.querySelector('[data-add-word]');
-      if(addW) addW.onclick = () => openWordModal();
-      const bulk = root.querySelector('[data-bulk]');
-      if(bulk) bulk.onclick = () => openBulkModal();
       root.querySelectorAll('[data-del]').forEach(b=>{
         b.onclick = (e)=>{ e.stopPropagation(); deleteWord(b.dataset.del); };
       });
