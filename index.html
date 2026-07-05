@@ -84,6 +84,30 @@
 
   /* Cards / panels */
   .panel{background:var(--bg-2);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
+  .reveal{
+    opacity:0;
+    transform:translateY(18px) scale(0.985);
+    filter:saturate(0.92);
+    transition:opacity .58s ease, transform .58s cubic-bezier(.16,.84,.28,1), filter .58s ease;
+    transition-delay:var(--d,0ms);
+    will-change:opacity,transform;
+  }
+  .reveal.in{
+    opacity:1;
+    transform:translateY(0) scale(1);
+    filter:saturate(1);
+  }
+  .soft-glow{position:relative;overflow:hidden;}
+  .soft-glow::before{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    background:linear-gradient(120deg, transparent 18%, rgba(255,255,255,0.12) 45%, transparent 68%);
+    transform:translateX(-120%);
+    transition:transform .8s ease;
+    pointer-events:none;
+  }
+  .soft-glow:hover::before{transform:translateX(120%);}
 
   /* Group tabs (folder tabs) */
   .group-row{display:flex;gap:8px;margin-bottom:18px;align-items:center;}
@@ -131,7 +155,7 @@
     display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid rgba(255,255,255,0.06);
   }
   .word-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;object-position:center;background:var(--bg-3);flex-shrink:0;}
-  .word-thumb.placeholder{display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .word-thumb.placeholder{display:flex;align-items:center;justify-content:center;font-size:16px;background:linear-gradient(135deg, rgba(217,164,65,0.18), rgba(78,148,130,0.2)), var(--bg-3);}
   .word-main{flex:1;min-width:0;}
   .word-term{font-family:var(--serif);font-size:15.5px;color:var(--text);}
   .word-term .sep{color:var(--text-muted);margin:0 6px;font-family:var(--sans);}
@@ -159,6 +183,18 @@
   .emoji-picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
   .emoji-opt{font-size:18px;background:var(--bg-3);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:5px 8px;cursor:pointer;}
   .emoji-opt.sel{border-color:var(--accent);background:rgba(217,164,65,0.15);}
+  .voice-row{display:flex;gap:8px;align-items:center;}
+  .voice-row input{flex:1;}
+  .voice-btn{
+    flex:0 0 auto;min-width:44px;height:44px;border-radius:50%;border:1px solid rgba(217,164,65,0.45);
+    background:rgba(217,164,65,0.12);color:var(--accent);font-size:18px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:transform .15s, background .15s, box-shadow .15s;
+  }
+  .voice-btn:hover{background:rgba(217,164,65,0.2);box-shadow:0 0 16px rgba(217,164,65,0.18);}
+  .voice-btn.listening{background:var(--accent);color:var(--accent-ink);animation:micPulse 1s ease-in-out infinite;}
+  .auto-fill-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .auto-fill-status{font-size:12px;color:var(--text-muted);font-family:var(--mono);}
+  @keyframes micPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);box-shadow:0 0 0 7px rgba(217,164,65,0.14);}}
 
   /* Modal */
   .modal-backdrop{position:fixed;inset:0;background:rgba(10,15,12,0.72);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50;}
@@ -179,31 +215,63 @@
   .combo-label{font-family:var(--mono);font-size:11px;color:var(--accent);text-transform:uppercase;
     letter-spacing:1px;margin-bottom:8px;text-align:center;width:100%;}
   .mode-card{
-    background:var(--bg-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:16px;cursor:pointer;
-    transition:border-color .15s, transform .1s;
+    position:relative;overflow:hidden;
+    background:
+      linear-gradient(145deg, rgba(255,255,255,0.035), transparent 42%),
+      var(--bg-2);
+    border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:16px;cursor:pointer;
+    transition:border-color .2s, transform .2s cubic-bezier(.16,.84,.28,1), box-shadow .2s, background .2s;
   }
-  .mode-card:hover{border-color:var(--accent);transform:translateY(-1px);}
-  .mode-card .m-emoji{font-size:22px;}
+  .mode-card:hover{border-color:rgba(217,164,65,0.75);transform:translateY(-4px);box-shadow:0 16px 30px rgba(0,0,0,0.24), 0 0 0 1px rgba(217,164,65,0.08) inset;}
+  .mode-card::after{
+    content:"";
+    position:absolute;
+    right:-30px;
+    top:-42px;
+    width:96px;
+    height:96px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(217,164,65,0.18), transparent 66%);
+    opacity:0;
+    transform:scale(.7);
+    transition:opacity .2s, transform .2s;
+    pointer-events:none;
+  }
+  .mode-card:hover::after{opacity:1;transform:scale(1);}
+  .mode-card .m-emoji{font-size:22px;display:inline-block;transition:transform .2s;}
+  .mode-card:hover .m-emoji{transform:translateY(-2px) rotate(-4deg) scale(1.08);}
   .mode-card .m-title{font-family:var(--serif);font-size:16px;font-weight:700;margin:8px 0 3px;}
   .mode-card .m-desc{font-size:12.5px;color:var(--text-muted);line-height:1.45;}
   .mode-card[disabled]{opacity:0.4;pointer-events:none;}
 
   /* Flashcard */
   .session-wrap{display:flex;flex-direction:column;align-items:center;}
-  .session-top{width:100%;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-bottom:16px;}
-  .progress-track{flex:1;height:4px;background:var(--bg-3);border-radius:2px;margin:0 12px;overflow:hidden;}
-  .progress-fill{height:100%;background:var(--accent);transition:width .25s;}
+  .session-top{width:100%;display:grid;grid-template-columns:auto minmax(90px,1fr) auto;gap:12px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-bottom:16px;}
+  .session-exit{
+    border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.06);color:var(--text);
+    border-radius:999px;padding:9px 13px;cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:700;
+    display:flex;align-items:center;gap:6px;white-space:nowrap;transition:background .15s,border-color .15s,transform .12s;
+  }
+  .session-exit:hover{background:rgba(193,85,77,0.16);border-color:rgba(193,85,77,0.55);color:#F0A79F;}
+  .session-exit:active{transform:scale(.97);}
+  .progress-track{height:4px;background:var(--bg-3);border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#f0c66b,var(--teal));transition:width .35s ease;box-shadow:0 0 16px rgba(217,164,65,0.45);}
 
-  .card-stack{position:relative;width:100%;max-width:380px;margin:0 auto 18px;min-height:380px;}
+  .card-stack{position:relative;width:100%;max-width:400px;margin:0 auto 18px;min-height:460px;}
   .ghost-card{position:absolute;left:0;right:0;top:0;height:100%;background:var(--card-2);border-radius:14px;}
   .ghost-card.g1{transform:scale(0.96) translateY(10px);opacity:0.65;z-index:1;}
   .ghost-card.g2{transform:scale(0.92) translateY(20px);opacity:0.35;z-index:0;}
   .flashcard{
-    position:relative;z-index:2;width:100%;min-height:380px;background:var(--card);color:var(--ink);
+    position:relative;z-index:2;width:100%;min-height:460px;background:var(--card);color:var(--ink);
     border-radius:14px;border-left:6px solid var(--accent);
     box-shadow:0 14px 34px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.05);
     padding:28px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
     touch-action:pan-y;cursor:grab;user-select:none;transition:transform .35s cubic-bezier(.2,.7,.3,1);
+  }
+  .card-stack{animation:floatIn .48s cubic-bezier(.16,.84,.28,1) both;}
+  @keyframes floatIn{
+    from{opacity:0;transform:translateY(18px) scale(.98);}
+    to{opacity:1;transform:translateY(0) scale(1);}
   }
   .flashcard.dragging{transition:none;cursor:grabbing;}
   .stamp{position:absolute;top:22px;padding:7px 16px;border:3px solid;border-radius:8px;font-weight:800;font-size:15px;
@@ -219,6 +287,19 @@
   .fc-example-row{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-style:italic;color:var(--ink-soft);max-width:92%;}
   .speak-inline{background:none;border:none;font-size:17px;cursor:pointer;color:var(--ink-soft);flex-shrink:0;}
   .hint-tap{font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-bottom:14px;text-align:center;}
+  .voice-practice{
+    display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:-4px 0 14px;
+  }
+  .voice-practice-btn{
+    border:1px solid rgba(217,164,65,0.5);background:rgba(217,164,65,0.12);color:var(--accent);
+    border-radius:999px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer;
+    display:flex;align-items:center;gap:7px;transition:transform .15s, background .15s, box-shadow .15s;
+  }
+  .voice-practice-btn:hover{background:rgba(217,164,65,0.2);box-shadow:0 0 16px rgba(217,164,65,0.16);}
+  .voice-practice-btn.listening{background:var(--accent);color:var(--accent-ink);animation:micPulse 1s ease-in-out infinite;}
+  .voice-practice-status{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+  .voice-practice-status.ok{color:#9FE0CD;}
+  .voice-practice-status.bad{color:#F0A79F;}
 
   /* Quiz */
   .quiz-term{font-family:var(--serif);font-size:26px;text-align:center;margin:20px 0 26px;}
@@ -226,11 +307,71 @@
   .opt-btn{
     background:var(--bg-2);border:1px solid rgba(255,255,255,0.12);color:var(--text);text-align:left;
     padding:13px 14px;border-radius:var(--radius);font-size:15px;cursor:pointer;
+    transition:transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
   }
-  .opt-btn:hover{border-color:var(--accent);}
+  .opt-btn:hover{border-color:var(--accent);transform:translateX(4px);box-shadow:0 8px 18px rgba(0,0,0,0.18);}
   .opt-btn.correct{background:rgba(78,148,130,0.25);border-color:var(--teal);}
   .opt-btn.wrong{background:rgba(193,85,77,0.22);border-color:var(--danger);}
   .opt-btn[disabled]{pointer-events:none;}
+
+  /* Orbit */
+  .orbit-stage{
+    position:relative;width:100%;max-width:520px;min-height:520px;margin:0 auto;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:18px;
+    background:
+      radial-gradient(circle at 50% 48%, rgba(217,164,65,0.18), transparent 18%),
+      radial-gradient(circle at 24% 18%, rgba(78,148,130,0.22), transparent 16%),
+      linear-gradient(145deg, rgba(255,255,255,0.055), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.09);
+    box-shadow:0 24px 60px rgba(0,0,0,0.28), inset 0 0 44px rgba(78,148,130,0.06);
+  }
+  .orbit-stage::before{
+    content:"";position:absolute;inset:24px;border:1px solid rgba(255,255,255,0.08);border-radius:50%;
+    animation:orbitSpin 18s linear infinite;
+  }
+  .orbit-stage::after{
+    content:"";position:absolute;inset:0;opacity:.2;pointer-events:none;
+    background-image:
+      radial-gradient(circle, rgba(255,255,255,0.38) 1px, transparent 1.6px),
+      radial-gradient(circle, rgba(217,164,65,0.34) 1px, transparent 1.5px);
+    background-size:64px 64px,94px 94px;background-position:10px 18px,28px 44px;
+    animation:starsDrift 14s linear infinite;
+  }
+  .orbit-core{
+    position:relative;z-index:2;width:190px;min-height:190px;border-radius:50%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;text-align:center;
+    background:radial-gradient(circle at 40% 26%, #fff4c7, var(--accent) 46%, #9d6f1d 100%);
+    color:var(--accent-ink);
+    box-shadow:0 0 0 12px rgba(217,164,65,0.08), 0 18px 38px rgba(0,0,0,0.35), inset -12px -18px 30px rgba(58,42,14,0.22);
+    animation:corePulse 3s ease-in-out infinite;
+  }
+  .orbit-core span{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1.2px;opacity:.72;margin-bottom:8px;}
+  .orbit-core b{font-family:var(--serif);font-size:28px;line-height:1.08;overflow-wrap:anywhere;}
+  .orbit-options{position:absolute;inset:0;z-index:3;}
+  .orbit-option{
+    position:absolute;width:min(42%,190px);min-height:68px;display:flex;align-items:center;justify-content:center;
+    padding:12px 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.16);
+    background:rgba(31,46,40,0.92);color:var(--text);font-size:14px;font-weight:700;text-align:center;cursor:pointer;
+    box-shadow:0 10px 24px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter:blur(10px);
+    transition:transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    animation:optionFloat 3.8s ease-in-out infinite;animation-delay:var(--float-delay,0s);
+  }
+  .orbit-option:nth-child(1){left:6%;top:12%;}
+  .orbit-option:nth-child(2){right:5%;top:20%;}
+  .orbit-option:nth-child(3){left:8%;bottom:17%;}
+  .orbit-option:nth-child(4){right:7%;bottom:10%;}
+  .orbit-option:hover{transform:translateY(-4px) scale(1.03);border-color:rgba(217,164,65,0.72);box-shadow:0 16px 30px rgba(0,0,0,0.32), 0 0 18px rgba(217,164,65,0.15);}
+  .orbit-option[disabled]{opacity:1;cursor:default;}
+  .orbit-option.correct{background:rgba(78,148,130,0.92);border-color:#9FE0CD;color:#07231c;animation:orbitPop .42s ease both;}
+  .orbit-option.wrong{background:rgba(193,85,77,0.88);border-color:#F0A79F;color:#2d0d0a;animation:orbitWrong .36s ease both;}
+  .orbit-hint{position:absolute;left:18px;right:18px;bottom:16px;z-index:4;font-family:var(--mono);font-size:11px;color:var(--text-muted);text-align:center;}
+  @keyframes orbitSpin{to{transform:rotate(360deg);}}
+  @keyframes starsDrift{to{background-position:74px 82px,122px 138px;}}
+  @keyframes corePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.035);}}
+  @keyframes optionFloat{0%,100%{translate:0 0;}50%{translate:0 -8px;}}
+  @keyframes orbitPop{50%{transform:scale(1.12);}100%{transform:scale(1.04);}}
+  @keyframes orbitWrong{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
 
   /* Typing */
   .type-wrap{max-width:420px;margin:0 auto;width:100%;text-align:center;}
@@ -244,7 +385,9 @@
   .match-card{
     background:var(--bg-2);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:12px 10px;
     font-size:13.5px;text-align:center;cursor:pointer;min-height:52px;display:flex;align-items:center;justify-content:center;
+    transition:transform .16s ease, border-color .16s ease, background .16s ease, opacity .16s ease;
   }
+  .match-card:hover{transform:translateY(-2px);border-color:rgba(217,164,65,0.6);}
   .match-card.sel{border-color:var(--accent);background:rgba(217,164,65,0.15);}
   .match-card.done{border-color:var(--teal);background:rgba(78,148,130,0.15);opacity:0.5;pointer-events:none;}
   .match-card.wrong-flash{border-color:var(--danger);background:rgba(193,85,77,0.2);}
@@ -259,12 +402,17 @@
 
   /* Stats view */
   .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;}
-  .stat-box{background:var(--bg-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:14px;text-align:center;}
+  .stat-box{position:relative;overflow:hidden;background:linear-gradient(145deg, rgba(255,255,255,0.035), transparent 46%), var(--bg-2);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:14px;text-align:center;}
+  .stat-box::after{content:"";position:absolute;left:18%;right:18%;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.55;}
   .stat-box b{display:block;font-family:var(--serif);font-size:24px;color:var(--accent);}
   .stat-box span{font-size:11px;color:var(--text-muted);font-family:var(--mono);text-transform:uppercase;}
 
   .hero-panel{text-align:center;padding:26px 16px;}
-  .hero-ring{width:136px;height:136px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;}
+  .hero-ring{width:136px;height:136px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 28px rgba(78,148,130,0.18);animation:ringPulse 3.2s ease-in-out infinite;}
+  @keyframes ringPulse{
+    0%,100%{transform:scale(1);filter:brightness(1);}
+    50%{transform:scale(1.025);filter:brightness(1.08);}
+  }
   .hero-ring-inner{width:108px;height:108px;border-radius:50%;background:var(--bg-2);display:flex;flex-direction:column;align-items:center;justify-content:center;}
   .hero-ring-inner b{font-family:var(--serif);font-size:28px;color:var(--accent);line-height:1;}
   .hero-ring-inner span{font-family:var(--mono);font-size:9.5px;color:var(--text-muted);text-transform:uppercase;margin-top:4px;}
@@ -272,7 +420,8 @@
   .hero-caption b{color:var(--accent);}
 
   .seg-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--bg-3);margin:6px 0 12px;}
-  .seg-bar .seg{height:100%;transition:width .3s;}
+  .seg-bar .seg{height:100%;transform-origin:left;animation:barGrow .72s cubic-bezier(.16,.84,.28,1) both;transition:width .3s;}
+  @keyframes barGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
   .seg-fresh{background:var(--ink-soft);}
   .seg-learning{background:var(--accent);}
   .seg-learned{background:var(--teal);}
@@ -285,7 +434,12 @@
   .group-stat-top .gname{display:flex;align-items:center;gap:6px;}
   .group-stat-top .gnum{color:var(--text-muted);font-family:var(--mono);font-size:12px;}
   .group-stat-bar{height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden;}
-  .group-stat-fill{height:100%;background:var(--teal);}
+  .group-stat-fill{height:100%;background:linear-gradient(90deg,var(--teal),#9fd8c8);animation:barGrow .72s cubic-bezier(.16,.84,.28,1) both;}
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important;}
+    .reveal{opacity:1;transform:none;filter:none;}
+  }
 
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);
     padding:10px 18px;border-radius:6px;font-size:13px;font-weight:600;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,0.4);}
@@ -329,15 +483,24 @@
     .mode-card .m-emoji{font-size:30px;}
     .mode-card .m-title{font-size:18px;margin:10px 0 5px;}
     .mode-card .m-desc{font-size:13.5px;line-height:1.5;}
-    .session-top{font-size:13px;margin-bottom:20px;}
+    .session-top{font-size:13px;margin-bottom:20px;grid-template-columns:auto minmax(64px,1fr) auto;gap:8px;}
+    .session-exit{padding:10px 12px;font-size:13px;}
     .progress-track{height:6px;}
     .quiz-term{font-size:26px;margin:24px 0 30px;}
     .opt-btn{padding:18px 16px;font-size:16.5px;}
     .type-input{font-size:22px;padding:16px;}
     .type-feedback{font-size:14.5px;}
     #type-check{min-height:50px;font-size:16px;padding:12px 20px;}
-    .flashcard{max-width:100%;min-height:360px;padding:24px 18px;}
-    .card-stack{min-height:360px;}
+    .flashcard{max-width:100%;min-height:430px;padding:28px 18px;}
+    .card-stack{min-height:430px;}
+    .orbit-stage{min-height:460px;border-radius:12px;}
+    .orbit-core{width:158px;min-height:158px;}
+    .orbit-core b{font-size:22px;}
+    .orbit-option{width:46%;min-height:60px;font-size:12.5px;padding:10px;}
+    .orbit-option:nth-child(1){left:3%;top:10%;}
+    .orbit-option:nth-child(2){right:3%;top:17%;}
+    .orbit-option:nth-child(3){left:4%;bottom:18%;}
+    .orbit-option:nth-child(4){right:4%;bottom:12%;}
     .fc-img{width:100px;height:100px;}
     .fc-term{font-size:clamp(22px,7.5vw,27px);}
     .fc-translation{font-size:clamp(19px,6.5vw,23px);}
@@ -362,7 +525,7 @@
     .stat-box b{font-size:22px;}
   }
   @media (hover:none){
-    .btn, .opt-btn, .mode-card, .icon-btn, .group-chip, .match-card, .flashcard{ -webkit-tap-highlight-color:transparent; }
+    .btn, .opt-btn, .orbit-option, .mode-card, .icon-btn, .group-chip, .match-card, .flashcard{ -webkit-tap-highlight-color:transparent; }
   }
 </style>
 </head>
@@ -491,19 +654,85 @@
   }
 
   /* ---------------- image + speech ---------------- */
+  function fallbackImage(term, emoji){
+    const clean = (term||'word').trim().slice(0,18) || 'word';
+    const initial = clean[0] ? clean[0].toUpperCase() : (emoji || '📘');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#D9A441"/>
+          <stop offset="0.55" stop-color="#4E9482"/>
+          <stop offset="1" stop-color="#25352E"/>
+        </linearGradient>
+        <filter id="s"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity=".28"/></filter>
+      </defs>
+      <rect width="240" height="240" rx="32" fill="#1F2E28"/>
+      <circle cx="196" cy="38" r="78" fill="#D9A441" opacity=".16"/>
+      <circle cx="42" cy="210" r="86" fill="#4E9482" opacity=".18"/>
+      <rect x="34" y="34" width="172" height="172" rx="28" fill="url(#g)" opacity=".92" filter="url(#s)"/>
+      <text x="120" y="132" text-anchor="middle" font-family="Georgia,serif" font-size="78" font-weight="700" fill="#F3EED8">${esc(initial)}</text>
+      <text x="120" y="172" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#F3EED8" opacity=".9">${esc(clean)}</text>
+    </svg>`;
+    return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+  }
+  function displayImage(w){
+    return w && w.image ? w.image : fallbackImage(w && w.term, (groupById(w && w.groupId)||{}).emoji);
+  }
+  function imageFallbackAttr(w){
+    return `this.onerror=null;this.src='${displayImage(Object.assign({}, w, {image:null}))}'`;
+  }
+  async function wikiImage(term, lang){
+    const l = (lang && lang!=='other') ? lang : 'en';
+    const url = `https://${l}.wikipedia.org/w/api.php?origin=*&action=query&prop=pageimages&format=json&piprop=thumbnail&pithumbsize=360&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrlimit=4`;
+    const data = await fetchJsonWithTimeout(url, 7000);
+    const pages = data && data.query && data.query.pages;
+    if(!pages) return null;
+    const page = Object.values(pages).find(p=>p.thumbnail && p.thumbnail.source);
+    return page && page.thumbnail && page.thumbnail.source ? page.thumbnail.source : null;
+  }
+  async function commonsImage(term){
+    const searchUrl = `https://commons.wikimedia.org/w/api.php?origin=*&action=query&format=json&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(term)}&gsrlimit=6&prop=imageinfo&iiprop=url&iiurlwidth=360`;
+    const data = await fetchJsonWithTimeout(searchUrl, 7000);
+    const pages = data && data.query && data.query.pages;
+    if(!pages) return null;
+    const page = Object.values(pages).find(p=>p.imageinfo && p.imageinfo[0] && (p.imageinfo[0].thumburl || p.imageinfo[0].url));
+    if(!page) return null;
+    return page.imageinfo[0].thumburl || page.imageinfo[0].url || null;
+  }
   async function fetchImage(term, lang){
-    try{
-      const l = (lang && lang!=='other') ? lang : 'en';
-      const url = `https://${l}.wikipedia.org/w/api.php?origin=*&action=query&prop=pageimages&format=json&piprop=thumbnail&pithumbsize=200&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrlimit=1`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const pages = data && data.query && data.query.pages;
-      if(pages){
-        const first = Object.values(pages)[0];
-        if(first && first.thumbnail && first.thumbnail.source) return first.thumbnail.source;
+    const clean = (term||'').trim();
+    if(!clean) return null;
+    const queries = Array.from(new Set([clean, clean.split(/\s+/).slice(0,2).join(' ')]));
+    const langs = Array.from(new Set([(lang && lang!=='other') ? lang : 'en', 'en']));
+    for(const q of queries){
+      for(const l of langs){
+        try{
+          const img = await wikiImage(q, l);
+          if(img) return img;
+        }catch(e){}
       }
-    }catch(e){ /* silent — image is a nice-to-have */ }
+      try{
+        const img = await commonsImage(q);
+        if(img) return img;
+      }catch(e){}
+    }
     return null;
+  }
+  async function repairMissingImages(limit){
+    const missing = state.words.filter(w=>!w.image).slice(0, limit || 24);
+    if(!missing.length) return;
+    for(const w of missing){
+      const g = groupById(w.groupId);
+      const img = await fetchImage(w.term, g && g.lang);
+      if(img){
+        const found = state.words.find(x=>x.id===w.id);
+        if(found){
+          found.image = img;
+          updateWordImageRow(found.id, img);
+          if(state.view==='library') renderView();
+        }
+      }
+    }
   }
   function speak(text, lang){
     try{
@@ -513,6 +742,97 @@
       speechSynthesis.cancel();
       speechSynthesis.speak(u);
     }catch(e){}
+  }
+  function speechLang(code){
+    return ({en:'en-US',de:'de-DE',es:'es-ES',fr:'fr-FR',it:'it-IT',pt:'pt-PT',tr:'tr-TR',nl:'nl-NL',pl:'pl-PL',sv:'sv-SE',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR',ru:'ru-RU',et:'et-EE'})[code] || 'en-US';
+  }
+  function recognitionCtor(){
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  }
+  async function fetchJsonWithTimeout(url, ms){
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), ms || 8000);
+    try{
+      const res = await fetch(url, {signal:ctrl.signal});
+      if(!res.ok) throw new Error('bad response');
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  async function autoTranslateTerm(term){
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(term)}&langpair=en|ru`;
+    const data = await fetchJsonWithTimeout(url, 8000);
+    const translated = data && data.responseData && data.responseData.translatedText;
+    return translated && translated.toLowerCase()!==term.toLowerCase() ? translated : '';
+  }
+  async function autoExampleTerm(term){
+    try{
+      const data = await fetchJsonWithTimeout(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`, 8000);
+      const entries = Array.isArray(data) ? data : [];
+      for(const entry of entries){
+        for(const meaning of (entry.meanings||[])){
+          for(const def of (meaning.definitions||[])){
+            if(def.example) return def.example;
+          }
+        }
+      }
+    }catch(e){}
+    return `I want to remember the word "${term}" and use it in a real sentence.`;
+  }
+  async function fillWordDetails(term, statusEl){
+    const clean = (term||'').trim();
+    if(!clean){ toast('Сначала введи или надиктуй слово'); return; }
+    const translationInput = root.querySelector('#w-translation');
+    const exampleInput = root.querySelector('#w-example');
+    if(statusEl) statusEl.textContent = 'думаю...';
+    try{
+      const [translation, example] = await Promise.all([
+        autoTranslateTerm(clean).catch(()=> ''),
+        autoExampleTerm(clean).catch(()=> '')
+      ]);
+      if(translationInput && translation) translationInput.value = translation;
+      if(exampleInput && example) exampleInput.value = example;
+      if(statusEl) statusEl.textContent = translation ? 'готово' : 'пример готов, перевод проверь вручную';
+      if(!translation) toast('Пример добавил, но перевод не удалось получить');
+    }catch(e){
+      if(statusEl) statusEl.textContent = 'не удалось';
+      toast('Автозаполнение сейчас недоступно');
+    }
+  }
+  function normalizeSpeechText(text){
+    return (text||'')
+      .toLowerCase()
+      .replace(/[’']/g,'')
+      .replace(/[^a-zа-яё0-9\s-]/gi,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+  function editDistance(a,b){
+    a = normalizeSpeechText(a);
+    b = normalizeSpeechText(b);
+    if(a===b) return 0;
+    const dp = Array.from({length:a.length+1}, (_,i)=>[i]);
+    for(let j=1;j<=b.length;j++) dp[0][j]=j;
+    for(let i=1;i<=a.length;i++){
+      for(let j=1;j<=b.length;j++){
+        dp[i][j] = Math.min(
+          dp[i-1][j] + 1,
+          dp[i][j-1] + 1,
+          dp[i-1][j-1] + (a[i-1]===b[j-1] ? 0 : 1)
+        );
+      }
+    }
+    return dp[a.length][b.length];
+  }
+  function speechMatches(spoken, expected){
+    const a = normalizeSpeechText(spoken);
+    const b = normalizeSpeechText(expected);
+    if(!a || !b) return false;
+    if(a===b || a.includes(b) || b.includes(a)) return true;
+    const maxLen = Math.max(a.length, b.length);
+    const distance = editDistance(a,b);
+    return distance <= Math.max(1, Math.floor(maxLen * 0.22));
   }
 
   /* ---------------- derived helpers ---------------- */
@@ -607,6 +927,28 @@
     else if(state.view==='practice') slot.innerHTML = state.session ? sessionView() : practiceView();
     else if(state.view==='stats') slot.innerHTML = statsView();
     bindView();
+    revealMotion(slot);
+  }
+
+  function revealMotion(scope){
+    const items = Array.from(scope.querySelectorAll('.reveal'));
+    if(!items.length) return;
+    if(!('IntersectionObserver' in window)){
+      items.forEach(el=>el.classList.add('in'));
+      return;
+    }
+    const io = new IntersectionObserver((entries, observer)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          entry.target.classList.add('in');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold:0.12, rootMargin:'0px 0px -8% 0px' });
+    items.forEach((el,i)=>{
+      el.style.setProperty('--d', `${Math.min(i*70, 420)}ms`);
+      io.observe(el);
+    });
   }
 
   /* ================= LIBRARY ================= */
@@ -632,9 +974,7 @@
   }
   function wordRow(w){
     const g = groupById(w.groupId);
-    const thumb = w.image
-      ? `<img class="word-thumb" src="${w.image}" alt="">`
-      : `<div class="word-thumb placeholder">${g?g.emoji:'📘'}</div>`;
+    const thumb = `<img class="word-thumb" src="${displayImage(w)}" alt="" onerror="${imageFallbackAttr(w)}">`;
     return `
       <div class="word-row" data-word="${w.id}">
         ${thumb}
@@ -775,16 +1115,23 @@
         <div class="form-row">
           <div>
             <label class="field-label">Слово</label>
-            <input type="text" id="w-term" placeholder="apple">
+            <div class="voice-row">
+              <input type="text" id="w-term" placeholder="apple">
+              <button class="voice-btn" id="w-dictate" type="button" title="Надиктовать слово">🎙️</button>
+            </div>
           </div>
           <div>
             <label class="field-label">Перевод</label>
             <input type="text" id="w-translation" placeholder="яблоко">
           </div>
         </div>
+        <div class="auto-fill-row">
+          <button class="btn btn-teal btn-sm" id="w-autofill" type="button">✨ Перевод + пример</button>
+          <span class="auto-fill-status" id="w-auto-status"></span>
+        </div>
         <label class="field-label">Пример (необязательно)</label>
         <textarea id="w-example" placeholder="I eat an apple every morning."></textarea>
-        <div class="hint">🖼️ Картинка подгрузится автоматически по слову.</div>
+        <div class="hint">🎙️ Можно надиктовать английское слово, затем нажать «Перевод + пример». 🖼️ Картинка подгрузится автоматически по слову.</div>
         <div class="modal-actions">
           <button class="btn btn-ghost" data-close="1">Отмена</button>
           <button class="btn btn-accent" id="w-save">Добавить</button>
@@ -917,6 +1264,53 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     }
 
     if(m.type==='word'){
+      const termInput = root.querySelector('#w-term');
+      const status = root.querySelector('#w-auto-status');
+      const autoBtn = root.querySelector('#w-autofill');
+      const micBtn = root.querySelector('#w-dictate');
+      if(autoBtn){
+        autoBtn.onclick = async ()=>{
+          autoBtn.disabled = true;
+          await fillWordDetails(termInput && termInput.value, status);
+          autoBtn.disabled = false;
+        };
+      }
+      if(micBtn){
+        const Rec = recognitionCtor();
+        if(!Rec){
+          micBtn.disabled = true;
+          micBtn.title = 'Браузер не поддерживает диктовку';
+        } else {
+          micBtn.onclick = ()=>{
+            const rec = new Rec();
+            const groupId = root.querySelector('#w-group').value;
+            const g = groupById(groupId);
+            rec.lang = speechLang(g && g.lang);
+            rec.interimResults = false;
+            rec.maxAlternatives = 1;
+            micBtn.classList.add('listening');
+            if(status) status.textContent = 'слушаю...';
+            rec.onresult = async (event)=>{
+              const text = event.results && event.results[0] && event.results[0][0] && event.results[0][0].transcript;
+              const clean = (text||'').trim().replace(/[.!?]+$/,'');
+              if(termInput && clean) termInput.value = clean;
+              if(status) status.textContent = clean ? 'распознано' : '';
+              if(clean && autoBtn){
+                autoBtn.disabled = true;
+                await fillWordDetails(clean, status);
+                autoBtn.disabled = false;
+              }
+            };
+            rec.onerror = ()=>{
+              micBtn.classList.remove('listening');
+              if(status) status.textContent = 'микрофон не сработал';
+              toast('Не получилось распознать голос');
+            };
+            rec.onend = ()=>{ micBtn.classList.remove('listening'); };
+            try{ rec.start(); }catch(e){ micBtn.classList.remove('listening'); }
+          };
+        }
+      }
       root.querySelector('#w-save').onclick = async ()=>{
         const groupId = root.querySelector('#w-group').value;
         const term = root.querySelector('#w-term').value.trim();
@@ -1031,6 +1425,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     const dir = state.practiceDirection || 'normal';
 
     return `
+      <div class="reveal">
       <label class="field-label">Тренировать</label>
       <select id="practice-group" class="practice-group-select" style="margin-bottom:18px;">${groupOpts}</select>
       <div class="hint" style="margin:-10px 0 14px;">К повторению сегодня: <b style="color:var(--accent)">${due.length}</b> из ${pool.length}</div>
@@ -1039,28 +1434,34 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
         <button class="dir-btn ${dir==='normal'?'active':''}" data-dir="normal">Слово → Перевод</button>
         <button class="dir-btn ${dir==='reverse'?'active':''}" data-dir="reverse">Перевод → Слово</button>
       </div>
+      </div>
       <div class="mode-grid">
-        <div class="mode-card" data-mode="flash" data-group="${gid}" ${pool.length===0?'disabled':''}>
+        <div class="mode-card reveal soft-glow" data-mode="flash" data-group="${gid}" ${pool.length===0?'disabled':''}>
           <div class="m-emoji">🗂️</div>
           <div class="m-title">Флеш-карточки</div>
           <div class="m-desc">Переворачивай карточку, оценивай себя — знал или нет. Классика Duocards.</div>
         </div>
-        <div class="mode-card" data-mode="quiz" data-group="${gid}" ${!enough?'disabled':''}>
+        <div class="mode-card reveal soft-glow" data-mode="quiz" data-group="${gid}" ${!enough?'disabled':''}>
           <div class="m-emoji">🎯</div>
           <div class="m-title">Тест с вариантами</div>
           <div class="m-desc">Выбери правильный перевод из четырёх вариантов.</div>
         </div>
-        <div class="mode-card" data-mode="type" data-group="${gid}" ${pool.length===0?'disabled':''}>
+        <div class="mode-card reveal soft-glow" data-mode="orbit" data-group="${gid}" ${!enough?'disabled':''}>
+          <div class="m-emoji">✨</div>
+          <div class="m-title">Словесная орбита</div>
+          <div class="m-desc">Лови правильный перевод среди вращающихся вариантов. Быстро, красиво и очень залипательно.</div>
+        </div>
+        <div class="mode-card reveal soft-glow" data-mode="type" data-group="${gid}" ${pool.length===0?'disabled':''}>
           <div class="m-emoji">⌨️</div>
           <div class="m-title">Введи перевод</div>
           <div class="m-desc">Впиши перевод сам — самый строгий способ проверить память.</div>
         </div>
-        <div class="mode-card" data-mode="match" data-group="${gid}" ${!enoughMatch?'disabled':''}>
+        <div class="mode-card reveal soft-glow" data-mode="match" data-group="${gid}" ${!enoughMatch?'disabled':''}>
           <div class="m-emoji">🧩</div>
           <div class="m-title">Найди пару</div>
           <div class="m-desc">Собери карточки в пары слово—перевод на скорость.</div>
         </div>
-        <div class="mode-card" data-mode="combo" data-group="${gid}" ${!enoughMatch?'disabled':''}>
+        <div class="mode-card reveal soft-glow" data-mode="combo" data-group="${gid}" ${!enoughMatch?'disabled':''}>
           <div class="m-emoji">🏋️</div>
           <div class="m-title">Комбо-тренировка</div>
           <div class="m-desc">Все 4 упражнения подряд на одном наборе слов — полная прокачка за один заход.</div>
@@ -1082,6 +1483,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     }
     let pool = wordsIn(groupId);
     if(pool.length===0){ toast('В этой группе пока нет слов'); return; }
+    if(mode==='orbit' && pool.length<2){ toast('Для орбиты нужно минимум 2 слова'); return; }
     let due = dueWords(pool);
     let queue = (due.length>=Math.min(5,pool.length)) ? due : pool.slice();
     // shuffle
@@ -1135,7 +1537,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
   function promptText(w, s){ return (s && s.direction==='reverse') ? w.translation : w.term; }
   function answerText(w, s){ return (s && s.direction==='reverse') ? w.term : w.translation; }
   function promptLang(w, s, g){ return (s && s.direction==='reverse') ? 'ru' : (g && g.lang); }
-  function stageName(m){ return ({flash:'Флеш-карточки', quiz:'Тест', type:'Ввод перевода', match:'Найди пару'})[m] || ''; }
+  function stageName(m){ return ({flash:'Флеш-карточки', quiz:'Тест', orbit:'Словесная орбита', type:'Ввод перевода', match:'Найди пару'})[m] || ''; }
 
   function currentWord(){ const s=state.session; return s.queue[s.idx]; }
 
@@ -1170,6 +1572,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     if(s.finished) return sessionEndHtml();
     if(s.mode==='flash') return flashHtml();
     if(s.mode==='quiz') return quizHtml();
+    if(s.mode==='orbit') return orbitHtml();
     if(s.mode==='type') return typeHtml();
     if(s.mode==='match') return matchHtml();
     return '';
@@ -1186,7 +1589,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
       <div class="session-top">
         <span>${done}/${total}</span>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-        <span data-exit="1" style="cursor:pointer;">✕ выйти</span>
+        <button class="session-exit" data-exit="1" type="button"><span>✕</span><span>Выйти</span></button>
       </div>`;
   }
 
@@ -1194,13 +1597,15 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     const s = state.session;
     const w = currentWord();
     const remaining = s.queue.length - s.idx;
-    const imgHtml = w.image
-      ? `<img class="fc-img" src="${w.image}">`
-      : `<div class="fc-img placeholder">${(groupById(w.groupId)||{}).emoji||'📘'}</div>`;
+    const imgHtml = `<img class="fc-img" src="${displayImage(w)}" onerror="${imageFallbackAttr(w)}" alt="">`;
     return `
     <div class="session-wrap">
       ${sessionTopHtml()}
       <div class="hint-tap">нажми — посмотреть перевод · потяни карточку: вправо — знал, влево — не знал</div>
+      <div class="voice-practice">
+        <button class="voice-practice-btn" id="fc-voice" type="button"><span>🎙️</span><span>Сказать слово</span></button>
+        <span class="voice-practice-status" id="fc-voice-status"></span>
+      </div>
       <div class="card-stack">
         ${remaining>2?`<div class="ghost-card g2"></div>`:''}
         ${remaining>1?`<div class="ghost-card g1"></div>`:''}
@@ -1243,6 +1648,39 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
       <div class="quiz-term">${esc(promptText(w,s))}</div>
       <div class="quiz-options">
         ${s._opts.map(o=>`<button class="opt-btn" data-answer="${esc(o)}">${esc(o)}</button>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  function orbitHtml(){
+    const s = state.session;
+    const w = currentWord();
+    if(!s._opts || s._optsFor!==w.id){
+      const correctAns = answerText(w,s);
+      const local = state.words.filter(x=>x.id!==w.id && x.groupId===w.groupId);
+      const global = state.words.filter(x=>x.id!==w.id);
+      const pool = (local.length>=3 ? local : global).slice().sort(()=>Math.random()-0.5);
+      const opts = [correctAns];
+      pool.forEach(x=>{
+        const txt = answerText(x,s);
+        if(txt && !opts.includes(txt) && opts.length<4) opts.push(txt);
+      });
+      s._opts = opts.sort(()=>Math.random()-0.5);
+      s._optsFor = w.id;
+      s._answered = false;
+    }
+    return `
+    <div class="session-wrap">
+      ${sessionTopHtml()}
+      <div class="orbit-stage">
+        <div class="orbit-core">
+          <span>найди перевод</span>
+          <b>${esc(promptText(w,s))}</b>
+        </div>
+        <div class="orbit-options">
+          ${s._opts.map((o,i)=>`<button class="orbit-option" style="--float-delay:${i*-0.45}s" data-orbit-answer="${esc(o)}">${esc(o)}</button>`).join('')}
+        </div>
+        <div class="orbit-hint">выбери правильную орбиту, пока слово держится в центре</div>
       </div>
     </div>`;
   }
@@ -1341,6 +1779,46 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
       if(sb) sb.onclick = (e)=>{ e.stopPropagation(); const w=currentWord(); const g=groupById(w.groupId); speak(promptText(w,s), promptLang(w,s,g)); };
       const sbEx = root.querySelector('[data-speak-ex]');
       if(sbEx) sbEx.onclick = (e)=>{ e.stopPropagation(); const w=currentWord(); const g=groupById(w.groupId); speak(w.example, g&&g.lang); };
+      const voiceBtn = root.querySelector('#fc-voice');
+      const voiceStatus = root.querySelector('#fc-voice-status');
+      if(voiceBtn){
+        const Rec = recognitionCtor();
+        if(!Rec){
+          voiceBtn.disabled = true;
+          if(voiceStatus) voiceStatus.textContent = 'браузер не поддерживает';
+        } else {
+          voiceBtn.onclick = (e)=>{
+            e.stopPropagation();
+            const w = currentWord();
+            const g = groupById(w.groupId);
+            const expected = s.direction==='reverse' ? answerText(w,s) : promptText(w,s);
+            const rec = new Rec();
+            rec.lang = speechLang(g && g.lang);
+            rec.interimResults = false;
+            rec.maxAlternatives = 3;
+            voiceBtn.classList.add('listening');
+            if(voiceStatus){ voiceStatus.textContent = 'слушаю...'; voiceStatus.className = 'voice-practice-status'; }
+            rec.onresult = (event)=>{
+              const result = event.results && event.results[0];
+              const variants = result ? Array.from(result).map(x=>x.transcript || '') : [];
+              const ok = variants.some(txt=>speechMatches(txt, expected));
+              if(ok){
+                if(voiceStatus){ voiceStatus.textContent = 'отлично'; voiceStatus.className = 'voice-practice-status ok'; }
+                s.flipped = true;
+                setTimeout(()=>renderView(), 360);
+              } else {
+                const heard = normalizeSpeechText(variants[0] || '');
+                if(voiceStatus){ voiceStatus.textContent = heard ? `услышал: ${heard}` : 'не расслышал'; voiceStatus.className = 'voice-practice-status bad'; }
+              }
+            };
+            rec.onerror = ()=>{
+              if(voiceStatus){ voiceStatus.textContent = 'микрофон не сработал'; voiceStatus.className = 'voice-practice-status bad'; }
+            };
+            rec.onend = ()=>{ voiceBtn.classList.remove('listening'); };
+            try{ rec.start(); }catch(err){ voiceBtn.classList.remove('listening'); }
+          };
+        }
+      }
 
       if(fc){
         let startX=0, startY=0, dx=0, dragging=false, pointerId=null;
@@ -1403,6 +1881,23 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
             else if(o===b) o.classList.add('wrong');
           });
           setTimeout(()=>advance(ok), 700);
+        };
+      });
+    }
+    if(s.mode==='orbit'){
+      root.querySelectorAll('[data-orbit-answer]').forEach(b=>{
+        b.onclick = ()=>{
+          if(s._answered) return;
+          s._answered = true;
+          const w = currentWord();
+          const correctAns = answerText(w,s);
+          const ok = b.dataset.orbitAnswer===correctAns;
+          root.querySelectorAll('[data-orbit-answer]').forEach(o=>{
+            o.setAttribute('disabled','1');
+            if(o.dataset.orbitAnswer===correctAns) o.classList.add('correct');
+            else if(o===b) o.classList.add('wrong');
+          });
+          setTimeout(()=>advance(ok), ok ? 620 : 820);
         };
       });
     }
@@ -1475,7 +1970,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     const accuracy = attempts>0 ? Math.round(100*correct/attempts) : null;
 
     return `
-      <div class="panel hero-panel">
+      <div class="panel hero-panel reveal soft-glow">
         <div class="hero-ring" style="background:conic-gradient(var(--teal) ${pct}%, var(--bg-3) 0)">
           <div class="hero-ring-inner">
             <b>${pct}%</b>
@@ -1486,11 +1981,11 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
       </div>
 
       <div class="stat-grid">
-        <div class="stat-box"><b>${due}</b><span>на повтор сегодня</span></div>
-        <div class="stat-box"><b>${accuracy!==null ? accuracy+'%' : '—'}</b><span>точность ответов</span></div>
+        <div class="stat-box reveal soft-glow"><b>${due}</b><span>на повтор сегодня</span></div>
+        <div class="stat-box reveal soft-glow"><b>${accuracy!==null ? accuracy+'%' : '—'}</b><span>точность ответов</span></div>
       </div>
 
-      <div class="panel">
+      <div class="panel reveal">
         <span class="eyebrow">Прогресс по словам</span>
         <div class="seg-bar">
           ${fresh>0?`<div class="seg seg-fresh" style="width:${fresh/total*100}%"></div>`:''}
@@ -1505,7 +2000,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
         <div class="hint">Слово переходит из «Новые» в «Учу», а потом в «Выучено» по мере того, как ты правильно отвечаешь на тренировках. Ошибка возвращает его в начало.</div>
       </div>
 
-      <div class="panel">
+      <div class="panel reveal">
         <span class="eyebrow">По группам</span>
         ${state.groups.map(g=>{
           const gw = wordsIn(g.id);
@@ -1566,6 +2061,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     root.innerHTML = `<div style="padding:60px;text-align:center;color:var(--text-muted);font-family:var(--mono);">загрузка картотеки…</div>`;
     await loadAll();
     render();
+    repairMissingImages(30);
   }
   (function init(){
     root.innerHTML = `<div style="padding:60px;text-align:center;color:var(--text-muted);font-family:var(--mono);">подключение…</div>`;
