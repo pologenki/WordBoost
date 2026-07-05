@@ -86,16 +86,29 @@
   .panel{background:var(--bg-2);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
 
   /* Group tabs (folder tabs) */
-  .group-row{display:flex;gap:8px;margin-bottom:18px;overflow-x:auto;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-  .group-row::-webkit-scrollbar{display:none;}
+  .group-row{display:flex;gap:8px;margin-bottom:18px;align-items:center;}
+  .group-picker-btn{
+    flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:var(--bg-2);border:1px solid rgba(255,255,255,0.12);color:var(--text);
+    padding:12px 16px;border-radius:12px;font-size:14.5px;font-weight:600;font-family:var(--sans);
+    cursor:pointer;text-align:left;
+  }
+  .group-picker-btn .count{color:var(--text-muted);font-family:var(--mono);font-size:12px;font-weight:400;margin-left:4px;}
+  .group-picker-btn .chev{color:var(--text-muted);font-size:12px;flex-shrink:0;}
   .group-chip{
     flex-shrink:0;font-family:var(--mono);font-size:12.5px;padding:9px 15px;border-radius:999px;
     background:var(--bg-2);border:1px solid rgba(255,255,255,0.1);color:var(--text-muted);white-space:nowrap;
     cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s,border-color .15s,color .15s;
   }
-  .group-chip.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;}
-  .group-chip .count{opacity:0.7;font-size:11px;}
   .group-chip.add{border-style:dashed;color:var(--accent);background:transparent;}
+
+  .gp-list{max-height:52vh;overflow-y:auto;margin:0 -4px;}
+  .gp-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 4px;
+    border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;}
+  .gp-row.active{background:rgba(217,164,65,0.1);}
+  .gp-info{display:flex;align-items:center;gap:8px;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .gp-count{color:var(--text-muted);font-family:var(--mono);font-size:11.5px;flex-shrink:0;}
+  .gp-actions{display:flex;gap:2px;flex-shrink:0;}
 
   .fab{
     position:fixed;right:20px;bottom:86px;z-index:41;width:56px;height:56px;border-radius:50%;
@@ -299,6 +312,7 @@
     .nav-btn .nav-icon{font-size:22px;}
     .group-row{gap:6px;}
     .group-chip{font-size:12px;padding:9px 13px;}
+    .group-picker-btn{font-size:13.5px;padding:11px 13px;}
     .btn{min-height:46px;font-size:15px;}
     .modal-backdrop{padding:0;align-items:stretch;}
     .modal{max-width:100%;border-radius:0;min-height:100vh;padding:18px 16px 28px;}
@@ -597,14 +611,9 @@
 
   /* ================= LIBRARY ================= */
   function libraryView(){
-    const groups = state.groups;
-    const chips = [`<div class="group-chip ${state.activeGroup==='all'?'active':''}" data-g="all">Все <span class="count">${state.words.length}</span></div>`]
-      .concat(groups.map(g=>{
-        const n = wordsIn(g.id).length;
-        return `<div class="group-chip ${state.activeGroup===g.id?'active':''}" data-g="${g.id}">${g.emoji} ${esc(g.name)} <span class="count">${n}</span></div>`;
-      }))
-      .concat([`<div class="group-chip add" data-newgroup="1">+ группа</div>`])
-      .join('');
+    const currentLabel = state.activeGroup==='all'
+      ? `📚 Все слова <span class="count">${state.words.length}</span>`
+      : (()=>{ const g=groupById(state.activeGroup); return g ? `${g.emoji} ${esc(g.name)} <span class="count">${wordsIn(g.id).length}</span>` : `📚 Все слова`; })();
 
     const list = wordsIn(state.activeGroup).slice().sort((a,b)=>b.createdAt-a.createdAt);
     const rows = list.length ? list.map(wordRow).join('') : `
@@ -614,7 +623,10 @@
       </div>`;
 
     return `
-      <div class="group-row">${chips}</div>
+      <div class="group-row">
+        <button class="group-picker-btn" data-open-picker="1">${currentLabel} <span class="chev">▾</span></button>
+        <button class="group-chip add" data-newgroup="1">+ группа</button>
+      </div>
       <div class="word-list">${rows}</div>
     `;
   }
@@ -640,9 +652,8 @@
 
   function bindView(){
     if(state.view==='library'){
-      root.querySelectorAll('.group-chip[data-g]').forEach(c=>{
-        c.onclick = () => { state.activeGroup = c.dataset.g; renderView(); };
-      });
+      const openPicker = root.querySelector('[data-open-picker]');
+      if(openPicker) openPicker.onclick = () => openGroupPickerModal();
       const addG = root.querySelector('[data-newgroup]');
       if(addG) addG.onclick = () => openGroupModal();
       root.querySelectorAll('[data-del]').forEach(b=>{
@@ -679,6 +690,7 @@
 
   /* ================= MODALS: group / word / bulk ================= */
   function openGroupModal(){ state.modal = {type:'group', emoji:EMOJIS[0], lang:'en'}; renderModal(); }
+  function openGroupPickerModal(){ state.modal = {type:'group-picker'}; renderModal(); }
   function openWordModal(){
     if(state.groups.length===0){ openGroupModal(); return; }
     const gid = state.activeGroup!=='all' ? state.activeGroup : state.groups[0].id;
@@ -697,9 +709,39 @@
     if(!slot) return;
     if(!state.modal){ slot.innerHTML=''; return; }
     if(state.modal.type==='group') slot.innerHTML = groupModalHtml();
+    else if(state.modal.type==='group-picker') slot.innerHTML = groupPickerModalHtml();
     else if(state.modal.type==='word') slot.innerHTML = wordModalHtml();
     else if(state.modal.type==='bulk') slot.innerHTML = bulkModalHtml();
     bindModal();
+  }
+
+  function groupPickerModalHtml(){
+    const allRow = `
+      <div class="gp-row ${state.activeGroup==='all'?'active':''}" data-select-group="all" data-gname="все слова">
+        <span class="gp-info">📚 Все слова <span class="gp-count">${state.words.length}</span></span>
+      </div>`;
+    const groupRows = state.groups.map(g=>{
+      const n = wordsIn(g.id).length;
+      return `<div class="gp-row ${state.activeGroup===g.id?'active':''}" data-select-group="${g.id}" data-gname="${esc(g.name)}">
+        <span class="gp-info">${g.emoji} ${esc(g.name)} <span class="gp-count">${n}</span></span>
+        <span class="gp-actions">
+          <button class="icon-btn" data-rename-group="${g.id}" title="Переименовать">✏️</button>
+          <button class="icon-btn" data-delete-group="${g.id}" title="Удалить группу">🗑️</button>
+        </span>
+      </div>`;
+    }).join('');
+    return `
+    <div class="modal-backdrop" data-close-bg="1">
+      <div class="modal">
+        <div class="modal-head"><div class="modal-title">Группы</div><button class="modal-close" data-close="1">✕</button></div>
+        <input type="text" id="gp-search" placeholder="Поиск группы…">
+        <div class="gp-list" style="margin-top:12px;">${allRow}${groupRows}</div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" data-close="1">Закрыть</button>
+          <button class="btn btn-accent" id="gp-new-group">+ Новая группа</button>
+        </div>
+      </div>
+    </div>`;
   }
 
   function groupModalHtml(){
@@ -820,6 +862,58 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
         renderView();
         insertGroupRow(g);
       };
+    }
+
+    if(m.type==='group-picker'){
+      const search = root.querySelector('#gp-search');
+      if(search){
+        search.oninput = ()=>{
+          const q = search.value.trim().toLowerCase();
+          root.querySelectorAll('.gp-row[data-gname]').forEach(r=>{
+            r.style.display = r.dataset.gname.toLowerCase().includes(q) ? '' : 'none';
+          });
+        };
+      }
+      root.querySelectorAll('[data-select-group]').forEach(r=>{
+        r.onclick = (e)=>{
+          if(e.target.closest('[data-rename-group]') || e.target.closest('[data-delete-group]')) return;
+          state.activeGroup = r.dataset.selectGroup;
+          closeModal();
+          renderView();
+        };
+      });
+      root.querySelectorAll('[data-rename-group]').forEach(b=>{
+        b.onclick = (e)=>{
+          e.stopPropagation();
+          const gid = b.dataset.renameGroup;
+          const g = groupById(gid);
+          if(!g) return;
+          const name = prompt('Новое название группы:', g.name);
+          if(name && name.trim() && name.trim()!==g.name){
+            g.name = name.trim();
+            renderModal();
+            renderView();
+            supaClient.from('groups').update({name:g.name}).eq('id', gid).then(({error})=>{ if(error) console.error(error); });
+          }
+        };
+      });
+      root.querySelectorAll('[data-delete-group]').forEach(b=>{
+        b.onclick = (e)=>{
+          e.stopPropagation();
+          const gid = b.dataset.deleteGroup;
+          const g = groupById(gid);
+          if(!g) return;
+          if(!confirm(`Удалить группу «${g.name}» вместе со всеми словами в ней (${wordsIn(gid).length})?`)) return;
+          state.groups = state.groups.filter(x=>x.id!==gid);
+          state.words = state.words.filter(x=>x.groupId!==gid);
+          if(state.activeGroup===gid) state.activeGroup = 'all';
+          renderModal();
+          renderView();
+          supaClient.from('groups').delete().eq('id', gid).then(({error})=>{ if(error) console.error(error); });
+        };
+      });
+      const newG = root.querySelector('#gp-new-group');
+      if(newG) newG.onclick = ()=>{ closeModal(); openGroupModal(); };
     }
 
     if(m.type==='word'){
