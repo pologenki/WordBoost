@@ -489,6 +489,18 @@
   .group-stat-top .gnum{color:var(--text-muted);font-family:var(--mono);font-size:12px;}
   .group-stat-bar{height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden;}
   .group-stat-fill{height:100%;background:linear-gradient(90deg,var(--teal),#9fd8c8);animation:barGrow .72s cubic-bezier(.16,.84,.28,1) both;}
+  .focus-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 6px;}
+  .focus-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+  .focus-word{
+    display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:10px;align-items:center;
+    padding:10px;border-radius:10px;background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.07);
+  }
+  .focus-thumb{width:48px;height:48px;border-radius:10px;object-fit:cover;background:var(--bg-3);}
+  .focus-main{min-width:0;}
+  .focus-term{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .focus-meta{font-size:12.5px;color:var(--text-muted);margin-top:3px;line-height:1.35;}
+  .focus-reason{font-family:var(--mono);font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.4px;text-align:right;white-space:nowrap;}
+  .focus-score{font-family:var(--mono);font-size:12px;color:var(--text-muted);text-align:right;margin-top:4px;}
 
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important;}
@@ -586,6 +598,9 @@
     .stat-grid{gap:8px;}
     .stat-box{padding:14px 10px;}
     .stat-box b{font-size:22px;}
+    .focus-word{grid-template-columns:42px minmax(0,1fr);gap:9px;}
+    .focus-thumb{width:42px;height:42px;}
+    .focus-reason,.focus-score{grid-column:2;text-align:left;}
   }
   @media (hover:none){
     .btn, .opt-btn, .orbit-option, .mode-card, .icon-btn, .group-chip, .match-card, .flashcard{ -webkit-tap-highlight-color:transparent; }
@@ -907,6 +922,55 @@
     const now = Date.now();
     return list.filter(w => !w.nextReview || w.nextReview <= now);
   }
+  function wordAccuracy(w){
+    const total = (w.correct||0) + (w.wrong||0);
+    return total ? Math.round(100 * (w.correct||0) / total) : null;
+  }
+  function wordFocusScore(w){
+    const total = (w.correct||0) + (w.wrong||0);
+    const acc = wordAccuracy(w);
+    let score = 0;
+    if(!w.nextReview || w.nextReview <= Date.now()) score += 28;
+    score += Math.max(0, 5 - (w.box||0)) * 12;
+    score += (w.wrong||0) * 14;
+    if(total > 0 && acc !== null) score += Math.max(0, 80 - acc);
+    if(total === 0) score += 18;
+    return score;
+  }
+  function focusReason(w){
+    const acc = wordAccuracy(w);
+    if((w.wrong||0) >= 3) return 'много ошибок';
+    if(acc !== null && acc < 65) return 'низкая точность';
+    if(!w.nextReview || w.nextReview <= Date.now()) return 'пора повторить';
+    if((w.box||0) < 2) return 'новое';
+    return 'укрепить';
+  }
+  function focusWords(limit, list){
+    return (list||state.words).slice()
+      .filter(w=>(w.box||0)<5 || (w.wrong||0)>0 || !w.nextReview || w.nextReview<=Date.now())
+      .sort((a,b)=>wordFocusScore(b)-wordFocusScore(a))
+      .slice(0, limit || 10);
+  }
+  function smartQueue(pool, mode){
+    const due = dueWords(pool);
+    const base = due.length>=Math.min(5,pool.length) ? due : pool.slice();
+    if(mode==='flash') return base.slice().sort(()=>Math.random()-0.5);
+    const weighted = [];
+    base.forEach(w=>{
+      let weight = 1;
+      if((w.box||0) < 2) weight += 2;
+      if((w.wrong||0) > 0) weight += Math.min(4, w.wrong||0);
+      const acc = wordAccuracy(w);
+      if(acc !== null && acc < 70) weight += 2;
+      if((w.box||0) >= 5 && (!w.nextReview || w.nextReview>Date.now())) weight = 1;
+      for(let i=0;i<weight;i++) weighted.push(w);
+    });
+    const picked = [];
+    weighted.sort(()=>Math.random()-0.5).forEach(w=>{
+      if(!picked.includes(w)) picked.push(w);
+    });
+    return picked.length ? picked : base.slice().sort(()=>Math.random()-0.5);
+  }
   function esc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   /* ---------------- render root ---------------- */
@@ -1081,7 +1145,9 @@
     } else if(state.view==='practice' && state.session){
       bindSession();
     } else if(state.view==='stats'){
-      // static
+      root.querySelectorAll('[data-focus-train]').forEach(b=>{
+        b.onclick = ()=> startFocusSession(b.dataset.focusTrain);
+      });
     }
   }
 
@@ -1557,10 +1623,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     let pool = wordsIn(groupId);
     if(pool.length===0){ toast('В этой группе пока нет слов'); return; }
     if((mode==='orbit' || mode==='lightning') && pool.length<2){ toast('Для этого режима нужно минимум 2 слова'); return; }
-    let due = dueWords(pool);
-    let queue = (due.length>=Math.min(5,pool.length)) ? due : pool.slice();
-    // shuffle
-    queue = queue.slice().sort(()=>Math.random()-0.5);
+    let queue = smartQueue(pool, mode);
     if(mode!=='match') queue = queue.slice(0, Math.min(15, queue.length));
 
     state.session = {
@@ -1571,6 +1634,26 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
       finished:false
     };
     renderView();
+  }
+
+  function startFocusSession(mode){
+    const focus = focusWords(18);
+    if(focus.length===0){ toast('Пока нет слабых слов для фокуса'); return; }
+    if((mode==='lightning' || mode==='orbit') && focus.length<2){
+      toast('Для этой фокус-тренировки нужно минимум 2 слова');
+      return;
+    }
+    const queue = smartQueue(focus, mode).slice(0, Math.min(15, focus.length));
+    state.view = 'practice';
+    state.combo = null;
+    state.session = {
+      mode, groupId:'all', queue, idx:0,
+      correct:0, wrong:0, flipped:false,
+      direction: state.practiceDirection || 'normal',
+      matchState:null,
+      finished:false
+    };
+    render();
   }
 
   function launchComboStage(){
@@ -2208,6 +2291,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     let attempts=0, correct=0;
     state.words.forEach(w=>{ attempts += (w.correct||0)+(w.wrong||0); correct += (w.correct||0); });
     const accuracy = attempts>0 ? Math.round(100*correct/attempts) : null;
+    const focus = focusWords(8);
 
     return `
       <div class="panel hero-panel reveal soft-glow">
@@ -2223,6 +2307,33 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
       <div class="stat-grid">
         <div class="stat-box reveal soft-glow"><b>${due}</b><span>на повтор сегодня</span></div>
         <div class="stat-box reveal soft-glow"><b>${accuracy!==null ? accuracy+'%' : '—'}</b><span>точность ответов</span></div>
+      </div>
+
+      <div class="panel reveal">
+        <span class="eyebrow">Слова в фокусе</span>
+        <div class="hint">Здесь слова, которые чаще всего ошибаются, имеют низкую точность или уже пора повторить. Тренировки ниже будут чаще подмешивать именно их.</div>
+        <div class="focus-actions">
+          <button class="btn btn-accent btn-sm" data-focus-train="lightning">⚡ Тренировать слабые</button>
+          <button class="btn btn-ghost btn-sm" data-focus-train="builder">🔤 Собрать слабые</button>
+        </div>
+        <div class="focus-list">
+          ${focus.length ? focus.map(w=>{
+            const acc = wordAccuracy(w);
+            const totalW = (w.correct||0)+(w.wrong||0);
+            const g = groupById(w.groupId);
+            return `<div class="focus-word">
+              <img class="focus-thumb" src="${displayImage(w)}" onerror="${imageFallbackAttr(w)}" alt="">
+              <div class="focus-main">
+                <div class="focus-term">${esc(w.term)} <span class="word-translation">— ${esc(w.translation)}</span></div>
+                <div class="focus-meta">${g?g.emoji+' '+esc(g.name)+' · ':''}${totalW ? `точность ${acc}% · ошибок ${w.wrong||0}` : 'ещё не тренировалось'} · box ${w.box||0}</div>
+              </div>
+              <div>
+                <div class="focus-reason">${focusReason(w)}</div>
+                <div class="focus-score">${Math.round(wordFocusScore(w))} фокус</div>
+              </div>
+            </div>`;
+          }).join('') : '<div class="hint">Пока нет явных слабых слов. После нескольких тренировок список станет точнее.</div>'}
+        </div>
       </div>
 
       <div class="panel reveal">
