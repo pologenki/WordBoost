@@ -158,15 +158,18 @@
   /* Library list */
   .word-list{border-top:1px solid rgba(255,255,255,0.08);}
   .word-row{
-    display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid rgba(255,255,255,0.06);
+    display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,0.06);
   }
   .word-thumb{width:48px;height:48px;border-radius:8px;object-fit:cover;object-position:center;background:var(--bg-3);flex-shrink:0;}
   .word-thumb.placeholder{display:flex;align-items:center;justify-content:center;font-size:16px;background:linear-gradient(135deg, rgba(217,164,65,0.18), rgba(78,148,130,0.2)), var(--bg-3);}
   .word-main{flex:1;min-width:0;}
-  .word-term{font-family:var(--serif);font-size:15.5px;color:var(--text);}
+  .word-term{font-family:var(--serif);font-size:17px;line-height:1.25;color:var(--text);}
   .word-term .sep{color:var(--text-muted);margin:0 6px;font-family:var(--sans);}
   .word-translation{color:var(--accent);font-weight:600;}
-  .word-example{font-size:12px;color:var(--text-muted);margin-top:2px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .word-example{
+    font-size:14px;color:var(--text-muted);margin-top:4px;font-style:italic;line-height:1.4;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
   .word-box{font-family:var(--mono);font-size:10.5px;color:var(--text-muted);white-space:nowrap;}
   .word-actions{display:flex;gap:4px;}
   .icon-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;padding:4px 6px;border-radius:4px;}
@@ -290,7 +293,7 @@
   .fc-term{font-family:var(--serif);font-size:26px;font-weight:700;}
   .fc-translation{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--teal);margin-top:8px;}
   .fc-divider{width:70%;height:1px;background:rgba(0,0,0,0.12);margin:16px 0;}
-  .fc-example-row{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-style:italic;color:var(--ink-soft);max-width:92%;}
+  .fc-example-row{display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;line-height:1.45;font-style:italic;color:var(--ink-soft);max-width:94%;}
   .speak-inline{background:none;border:none;font-size:17px;cursor:pointer;color:var(--ink-soft);flex-shrink:0;}
   .hint-tap{font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-bottom:14px;text-align:center;}
   .voice-practice{
@@ -516,9 +519,10 @@
     .modal{max-width:100%;border-radius:0;min-height:100vh;padding:18px 16px 28px;}
     .modal-title{font-size:17px;}
     .form-row{flex-direction:column;gap:0;}
-    .word-row{flex-wrap:wrap;row-gap:4px;}
+    .word-row{flex-wrap:wrap;row-gap:6px;padding:14px 4px;}
     .word-box{order:5;width:100%;padding-left:50px;margin-top:-2px;}
-    .word-term{font-size:14.5px;}
+    .word-term{font-size:16.5px;line-height:1.28;}
+    .word-example{font-size:14px;line-height:1.45;margin-top:5px;-webkit-line-clamp:3;}
 
     /* Training screens — bigger everything */
     .practice-group-select{font-size:16px;padding:13px 10px;}
@@ -555,7 +559,7 @@
     .fc-img{width:100px;height:100px;}
     .fc-term{font-size:clamp(22px,7.5vw,27px);}
     .fc-translation{font-size:clamp(19px,6.5vw,23px);}
-    .fc-example-row{font-size:13.5px;}
+    .fc-example-row{font-size:15.5px;line-height:1.45;}
     .hint-tap{font-size:11.5px;line-height:1.5;padding:0 10px;}
     .stamp{font-size:14px;padding:7px 14px;}
     .match-grid{gap:8px;}
