@@ -255,7 +255,14 @@
 
   /* Flashcard */
   .session-wrap{display:flex;flex-direction:column;align-items:center;}
-  .session-top{width:100%;display:grid;grid-template-columns:auto minmax(90px,1fr) auto;gap:12px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-bottom:16px;}
+  .session-top{width:100%;display:grid;grid-template-columns:auto minmax(90px,1fr) auto auto;gap:10px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-bottom:16px;}
+  .session-skip{
+    border:1px solid rgba(217,164,65,0.35);background:rgba(217,164,65,0.1);color:var(--accent);
+    border-radius:999px;padding:9px 13px;cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:800;
+    display:flex;align-items:center;gap:6px;white-space:nowrap;transition:background .15s,border-color .15s,transform .12s;
+  }
+  .session-skip:hover{background:rgba(217,164,65,0.18);border-color:rgba(217,164,65,0.65);}
+  .session-skip:active{transform:scale(.97);}
   .session-exit{
     border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.06);color:var(--text);
     border-radius:999px;padding:9px 13px;cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:700;
@@ -531,7 +538,8 @@
     .mode-card .m-emoji{font-size:30px;}
     .mode-card .m-title{font-size:18px;margin:10px 0 5px;}
     .mode-card .m-desc{font-size:13.5px;line-height:1.5;}
-    .session-top{font-size:13px;margin-bottom:20px;grid-template-columns:auto minmax(64px,1fr) auto;gap:8px;}
+    .session-top{font-size:13px;margin-bottom:20px;grid-template-columns:auto minmax(54px,1fr) auto auto;gap:6px;}
+    .session-skip{padding:10px 11px;font-size:12.5px;}
     .session-exit{padding:10px 12px;font-size:13px;}
     .progress-track{height:6px;}
     .quiz-term{font-size:26px;margin:24px 0 30px;}
@@ -1648,6 +1656,26 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     if(s.idx >= s.queue.length){ s.finished = true; finishSession(); return; }
     renderView();
   }
+  function skipCurrent(){
+    const s = state.session;
+    if(!s || s.finished || s.mode==='combo-end') return;
+    if(s.mode==='match'){
+      const ms = s.matchState;
+      const next = ms && ms.pairs.find(w=>!ms.solved.includes(w.id));
+      if(next){
+        gradeWord(next, false);
+        ms.solved.push(next.id);
+      }
+      if(!ms || ms.solved.length>=ms.pairs.length){
+        s.finished = true;
+        finishSession();
+      } else {
+        renderView();
+      }
+      return;
+    }
+    advance(false);
+  }
 
   function sessionView(){
     const s = state.session;
@@ -1674,6 +1702,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
       <div class="session-top">
         <span>${done}/${total}</span>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <button class="session-skip" data-skip="1" type="button"><span>?</span><span>Не знаю</span></button>
         <button class="session-exit" data-exit="1" type="button"><span>✕</span><span>Выйти</span></button>
       </div>`;
   }
@@ -1908,6 +1937,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
   function bindSession(){
     const s = state.session;
     root.querySelectorAll('[data-exit]').forEach(b=>b.onclick = ()=>{ state.session=null; state.combo=null; renderView(); });
+    root.querySelectorAll('[data-skip]').forEach(b=>b.onclick = ()=> skipCurrent());
     if(s.mode==='combo-end'){
       const again = root.querySelector('[data-again-combo]');
       if(again) again.onclick = ()=> startSession('combo', s.groupId);
