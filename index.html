@@ -54,12 +54,18 @@
   .streak-badge{font-family:var(--mono);font-size:13px;background:var(--bg-3);border:1px solid rgba(217,164,65,0.35);color:var(--accent);padding:6px 10px;border-radius:var(--radius);display:flex;align-items:center;gap:6px;white-space:nowrap;}
 
   /* Tabs */
-  .bottom-nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg-2);border-top:1px solid rgba(255,255,255,0.08);z-index:40;}
-  .bottom-nav-inner{max-width:820px;margin:0 auto;display:flex;padding:6px 10px calc(6px + env(safe-area-inset-bottom));}
-  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
-    color:var(--text-muted);font-family:var(--mono);font-size:10.5px;padding:8px 4px;cursor:pointer;border-radius:8px;}
-  .nav-btn .nav-icon{font-size:21px;line-height:1;}
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;background:rgba(31,46,40,0.92);border-top:1px solid rgba(255,255,255,0.08);z-index:40;backdrop-filter:blur(16px);box-shadow:0 -16px 34px rgba(0,0,0,0.24);}
+  .bottom-nav-inner{max-width:820px;margin:0 auto;display:flex;gap:6px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));}
+  .nav-btn{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;
+    color:var(--text-muted);font-family:var(--mono);font-size:10.5px;padding:8px 4px;cursor:pointer;border-radius:14px;overflow:hidden;
+    transition:color .2s, transform .18s, background .2s;}
+  .nav-btn::before{content:"";position:absolute;inset:4px;border-radius:12px;background:linear-gradient(135deg, rgba(217,164,65,0.18), rgba(78,148,130,0.16));opacity:0;transform:scale(.86);transition:opacity .2s, transform .22s cubic-bezier(.16,.84,.28,1);}
+  .nav-btn .nav-icon,.nav-btn span{position:relative;z-index:1;}
+  .nav-btn .nav-icon{font-size:21px;line-height:1;transition:transform .2s;}
+  .nav-btn:hover{color:var(--text);transform:translateY(-1px);}
   .nav-btn.active{color:var(--accent);}
+  .nav-btn.active::before{opacity:1;transform:scale(1);}
+  .nav-btn.active .nav-icon{transform:translateY(-2px) scale(1.08);}
 
   h2.section-title{font-family:var(--serif);font-size:20px;font-weight:700;margin:0 0 14px;color:var(--text);}
   .eyebrow{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:4px;display:block;}
@@ -314,6 +320,44 @@
   .opt-btn.wrong{background:rgba(193,85,77,0.22);border-color:var(--danger);}
   .opt-btn[disabled]{pointer-events:none;}
 
+  /* Lightning / builder trainings */
+  .duo-stage{width:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:14px;}
+  .duo-card{
+    width:100%;min-height:250px;border-radius:18px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(155deg, var(--card), #efe5be);color:var(--ink);border:1px solid rgba(0,0,0,0.06);
+    box-shadow:0 18px 40px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.7);
+    animation:floatIn .42s cubic-bezier(.16,.84,.28,1) both;
+  }
+  .duo-card-img{width:92px;height:92px;border-radius:22px;object-fit:cover;box-shadow:0 10px 22px rgba(0,0,0,0.22);margin-bottom:14px;}
+  .duo-kicker{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:var(--ink-soft);margin-bottom:8px;}
+  .duo-prompt{font-family:var(--serif);font-size:30px;font-weight:800;line-height:1.08;overflow-wrap:anywhere;}
+  .duo-sub{font-size:13px;color:var(--ink-soft);margin-top:10px;}
+  .lightning-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+  .lightning-option{
+    min-height:74px;border-radius:14px;border:1px solid rgba(255,255,255,0.13);background:var(--bg-2);color:var(--text);
+    font-size:15px;font-weight:800;padding:14px;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,0.18);
+    transition:transform .16s, border-color .16s, background .16s;
+  }
+  .lightning-option:hover{transform:translateY(-3px);border-color:rgba(217,164,65,0.7);}
+  .lightning-option.correct{background:rgba(78,148,130,0.34);border-color:#9FE0CD;color:#DFF9F1;}
+  .lightning-option.wrong{background:rgba(193,85,77,0.28);border-color:#F0A79F;color:#FFE5E1;}
+  .builder-slots{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;min-height:48px;width:100%;}
+  .builder-slot{
+    min-width:34px;height:42px;border-radius:10px;border:1px solid rgba(217,164,65,0.45);background:rgba(217,164,65,0.09);
+    display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--accent);
+  }
+  .builder-letters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%;}
+  .builder-letter{
+    min-width:42px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:var(--bg-2);color:var(--text);
+    font-size:18px;font-weight:800;cursor:pointer;transition:transform .14s,border-color .14s,opacity .14s;
+  }
+  .builder-letter:hover{transform:translateY(-2px);border-color:rgba(217,164,65,0.7);}
+  .builder-letter.used{opacity:.26;pointer-events:none;}
+  .builder-tools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .builder-feedback{font-family:var(--mono);font-size:12px;color:var(--text-muted);min-height:18px;}
+  .builder-feedback.ok{color:#9FE0CD;}
+  .builder-feedback.bad{color:#F0A79F;}
+
   /* Orbit */
   .orbit-stage{
     position:relative;width:100%;max-width:520px;min-height:520px;margin:0 auto;
@@ -488,6 +532,13 @@
     .progress-track{height:6px;}
     .quiz-term{font-size:26px;margin:24px 0 30px;}
     .opt-btn{padding:18px 16px;font-size:16.5px;}
+    .duo-card{min-height:230px;border-radius:14px;padding:20px 14px;}
+    .duo-prompt{font-size:clamp(25px,8vw,32px);}
+    .duo-card-img{width:82px;height:82px;border-radius:18px;}
+    .lightning-options{grid-template-columns:1fr;gap:9px;}
+    .lightning-option{min-height:64px;font-size:15px;}
+    .builder-slot{min-width:30px;height:38px;font-size:18px;}
+    .builder-letter{min-width:39px;height:42px;font-size:17px;}
     .type-input{font-size:22px;padding:16px;}
     .type-feedback{font-size:14.5px;}
     #type-check{min-height:50px;font-size:16px;padding:12px 20px;}
@@ -1451,6 +1502,16 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
           <div class="m-title">Словесная орбита</div>
           <div class="m-desc">Лови правильный перевод среди вращающихся вариантов. Быстро, красиво и очень залипательно.</div>
         </div>
+        <div class="mode-card reveal soft-glow" data-mode="lightning" data-group="${gid}" ${!enough?'disabled':''}>
+          <div class="m-emoji">⚡</div>
+          <div class="m-title">Молния</div>
+          <div class="m-desc">Быстрые карточки с выбором ответа: минимум шума, максимум темпа, как короткий забег.</div>
+        </div>
+        <div class="mode-card reveal soft-glow" data-mode="builder" data-group="${gid}" ${pool.length===0?'disabled':''}>
+          <div class="m-emoji">🔤</div>
+          <div class="m-title">Собери слово</div>
+          <div class="m-desc">Собирай правильный ответ из букв — хорошо цепляет написание и память.</div>
+        </div>
         <div class="mode-card reveal soft-glow" data-mode="type" data-group="${gid}" ${pool.length===0?'disabled':''}>
           <div class="m-emoji">⌨️</div>
           <div class="m-title">Введи перевод</div>
@@ -1483,7 +1544,7 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     }
     let pool = wordsIn(groupId);
     if(pool.length===0){ toast('В этой группе пока нет слов'); return; }
-    if(mode==='orbit' && pool.length<2){ toast('Для орбиты нужно минимум 2 слова'); return; }
+    if((mode==='orbit' || mode==='lightning') && pool.length<2){ toast('Для этого режима нужно минимум 2 слова'); return; }
     let due = dueWords(pool);
     let queue = (due.length>=Math.min(5,pool.length)) ? due : pool.slice();
     // shuffle
@@ -1537,9 +1598,27 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
   function promptText(w, s){ return (s && s.direction==='reverse') ? w.translation : w.term; }
   function answerText(w, s){ return (s && s.direction==='reverse') ? w.term : w.translation; }
   function promptLang(w, s, g){ return (s && s.direction==='reverse') ? 'ru' : (g && g.lang); }
-  function stageName(m){ return ({flash:'Флеш-карточки', quiz:'Тест', orbit:'Словесная орбита', type:'Ввод перевода', match:'Найди пару'})[m] || ''; }
+  function stageName(m){ return ({flash:'Флеш-карточки', quiz:'Тест', orbit:'Словесная орбита', lightning:'Молния', builder:'Собери слово', type:'Ввод перевода', match:'Найди пару'})[m] || ''; }
 
   function currentWord(){ const s=state.session; return s.queue[s.idx]; }
+  function answerOptions(w,s,count){
+    const correctAns = answerText(w,s);
+    const local = state.words.filter(x=>x.id!==w.id && x.groupId===w.groupId);
+    const global = state.words.filter(x=>x.id!==w.id);
+    const pool = (local.length>=count-1 ? local : global).slice().sort(()=>Math.random()-0.5);
+    const opts = [correctAns];
+    pool.forEach(x=>{
+      const txt = answerText(x,s);
+      if(txt && !opts.includes(txt) && opts.length<count) opts.push(txt);
+    });
+    return opts.sort(()=>Math.random()-0.5);
+  }
+  function normalizeBuildText(text){
+    return Array.from((text||'').toLowerCase()).filter(ch=>/[\p{L}\p{N}]/u.test(ch)).join('');
+  }
+  function buildLettersFor(text){
+    return Array.from(normalizeBuildText(text)).map((ch,i)=>({id:i+'-'+ch, ch})).sort(()=>Math.random()-0.5);
+  }
 
   function gradeWord(w, ok){
     if(ok){
@@ -1573,6 +1652,8 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
     if(s.mode==='flash') return flashHtml();
     if(s.mode==='quiz') return quizHtml();
     if(s.mode==='orbit') return orbitHtml();
+    if(s.mode==='lightning') return lightningHtml();
+    if(s.mode==='builder') return builderHtml();
     if(s.mode==='type') return typeHtml();
     if(s.mode==='match') return matchHtml();
     return '';
@@ -1681,6 +1762,68 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
           ${s._opts.map((o,i)=>`<button class="orbit-option" style="--float-delay:${i*-0.45}s" data-orbit-answer="${esc(o)}">${esc(o)}</button>`).join('')}
         </div>
         <div class="orbit-hint">выбери правильную орбиту, пока слово держится в центре</div>
+      </div>
+    </div>`;
+  }
+
+  function lightningHtml(){
+    const s = state.session;
+    const w = currentWord();
+    if(!s._opts || s._optsFor!==w.id){
+      s._opts = answerOptions(w,s,4);
+      s._optsFor = w.id;
+      s._answered = false;
+    }
+    return `
+    <div class="session-wrap">
+      ${sessionTopHtml()}
+      <div class="duo-stage">
+        <div class="duo-card">
+          <img class="duo-card-img" src="${displayImage(w)}" onerror="${imageFallbackAttr(w)}" alt="">
+          <div class="duo-kicker">выбери быстро</div>
+          <div class="duo-prompt">${esc(promptText(w,s))}</div>
+          <div class="duo-sub">правильный ответ засчитает слово в прогресс</div>
+        </div>
+        <div class="lightning-options">
+          ${s._opts.map(o=>`<button class="lightning-option" data-lightning-answer="${esc(o)}">${esc(o)}</button>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function builderHtml(){
+    const s = state.session;
+    const w = currentWord();
+    const target = normalizeBuildText(answerText(w,s));
+    if(!s._build || s._buildFor!==w.id){
+      s._buildFor = w.id;
+      s._build = { letters:buildLettersFor(answerText(w,s)), picked:[], checked:false };
+    }
+    const picked = s._build.picked.map(x=>x.ch).join('');
+    return `
+    <div class="session-wrap">
+      ${sessionTopHtml()}
+      <div class="duo-stage">
+        <div class="duo-card">
+          <img class="duo-card-img" src="${displayImage(w)}" onerror="${imageFallbackAttr(w)}" alt="">
+          <div class="duo-kicker">собери ответ</div>
+          <div class="duo-prompt">${esc(promptText(w,s))}</div>
+          <div class="duo-sub">${target.length} ${target.length===1?'буква':'букв'} в ответе</div>
+        </div>
+        <div class="builder-slots">
+          ${Array.from({length:target.length}).map((_,i)=>`<div class="builder-slot">${esc(picked[i]||'')}</div>`).join('')}
+        </div>
+        <div class="builder-letters">
+          ${s._build.letters.map((l,i)=>{
+            const used = s._build.picked.some(p=>p.i===i);
+            return `<button class="builder-letter ${used?'used':''}" data-build-letter="${i}">${esc(l.ch)}</button>`;
+          }).join('')}
+        </div>
+        <div class="builder-tools">
+          <button class="btn btn-ghost btn-sm" id="build-back" type="button">Стереть</button>
+          <button class="btn btn-accent btn-sm" id="build-check" type="button">Проверить</button>
+        </div>
+        <div class="builder-feedback" id="build-feedback"></div>
       </div>
     </div>`;
   }
@@ -1900,6 +2043,69 @@ book	книга	This is my book" style="min-height:120px;">${esc(m.text||'')}</t
           setTimeout(()=>advance(ok), ok ? 620 : 820);
         };
       });
+    }
+    if(s.mode==='lightning'){
+      root.querySelectorAll('[data-lightning-answer]').forEach(b=>{
+        b.onclick = ()=>{
+          if(s._answered) return;
+          s._answered = true;
+          const w = currentWord();
+          const correctAns = answerText(w,s);
+          const ok = b.dataset.lightningAnswer===correctAns;
+          root.querySelectorAll('[data-lightning-answer]').forEach(o=>{
+            o.setAttribute('disabled','1');
+            if(o.dataset.lightningAnswer===correctAns) o.classList.add('correct');
+            else if(o===b) o.classList.add('wrong');
+          });
+          setTimeout(()=>advance(ok), ok ? 420 : 720);
+        };
+      });
+    }
+    if(s.mode==='builder'){
+      function checkBuild(){
+        if(!s._build || s._build.checked) return;
+        const fb = root.querySelector('#build-feedback');
+        const w = currentWord();
+        const target = normalizeBuildText(answerText(w,s));
+        const value = s._build.picked.map(x=>x.ch).join('');
+        if(value.length < target.length){
+          if(fb){ fb.textContent = 'ещё не все буквы'; fb.className = 'builder-feedback bad'; }
+          return;
+        }
+        s._build.checked = true;
+        const ok = value === target;
+        if(fb){ fb.textContent = ok ? 'собрано верно' : `правильно: ${answerText(w,s)}`; fb.className = 'builder-feedback ' + (ok?'ok':'bad'); }
+        setTimeout(()=>advance(ok), ok ? 520 : 920);
+      }
+      root.querySelectorAll('[data-build-letter]').forEach(btn=>{
+        btn.onclick = ()=>{
+          if(!s._build || s._build.checked) return;
+          const i = parseInt(btn.dataset.buildLetter,10);
+          if(s._build.picked.some(p=>p.i===i)) return;
+          const letter = s._build.letters[i];
+          if(!letter) return;
+          s._build.picked.push({i, ch:letter.ch});
+          const targetLen = normalizeBuildText(answerText(currentWord(),s)).length;
+          if(s._build.picked.length >= targetLen){
+            renderView();
+            setTimeout(()=>{
+              const currentFb = root.querySelector('#build-feedback');
+              if(currentFb) currentFb.textContent = 'проверяю...';
+              checkBuild();
+            }, 40);
+          } else {
+            renderView();
+          }
+        };
+      });
+      const back = root.querySelector('#build-back');
+      if(back) back.onclick = ()=>{
+        if(!s._build || s._build.checked) return;
+        s._build.picked.pop();
+        renderView();
+      };
+      const check = root.querySelector('#build-check');
+      if(check) check.onclick = checkBuild;
     }
     if(s.mode==='type'){
       const input = root.querySelector('#type-in');
